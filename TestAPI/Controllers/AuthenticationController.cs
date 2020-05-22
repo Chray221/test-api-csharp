@@ -112,13 +112,20 @@ namespace TestAPI.Controllers
                     {
                         string imageName = Request.Form.Files["image"].FileName;
                         //user.Image = Path.Combine(RootPath, $"images", $"{user.Id}{Path.GetExtension(imageName)}");
-                        user.Image = Path.Combine($"images", $"{user.Username}_{user.Id}{Path.GetExtension(imageName)}");
+                        user.Image = Path.Combine($"images", $"{Guid.NewGuid()}{Path.GetExtension(imageName)}");
                         Logger.Log($" {Request.Form.FirstOrDefault((requestData) => requestData.Key.Equals("image")).Value}");
                         //testDB.Users.Update(userAdded.Entity);
                         await ImageHelper.SaveImage(Request.Form.Files["image"], user.Image);
                     }
                     var userAdded = await testDB.Users.AddAsync(user);
-                    await testDB.SaveChangesAsync();
+                    Logger.Log($"ADDED: {userAdded.Entity.Id}");
+                    var savedChanges = await testDB.SaveChangesAsync();
+                    Logger.Log($"SAVED: {userAdded.Entity.Id} {savedChanges} ");
+                    if (Request.Form.Files["image"] != null)
+                    {
+                        
+                        await ImageHelper.SaveImage(Request.Form.Files["image"], user.Image);
+                    }
                     return new { user = userAdded.Entity.UserFormat(Request.Host.Value), status = 200 };
                 }
                 else
