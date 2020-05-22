@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Newtonsoft.Json;
 using TestAPI.Helpers;
 using TestAPI.ModelContexts;
@@ -58,6 +59,7 @@ namespace TestAPI.Controllers
                 }
                 Logger.Log($"QUERY");
                 User userFound = await testDB.Users.FirstOrDefaultAsync((userObject) => userObject.Username.Equals(user.Username));
+                testDB.Entry(userFound).Reference(u => u.ImageFile).Load(); // retreived data from reference entity (ImageFile Property from ImageID)
                 if ( userFound != null)
                 {
                     if (SaltHasher.VerifyHash(user.Password, userFound.Password))
@@ -106,27 +108,30 @@ namespace TestAPI.Controllers
                 if (userFound == null)
                 {
                     User user = new User(Request.Form["username"].First(), Request.Form["first_name"].First(), Request.Form["last_name"].First(), SaltHasher.ComputeHash(Request.Form["password"].First()));
-                    //user.Password = SaltHasher.ComputeHash(user.Password);
                                    
                     if (Request.Form.Files["image"] != null)
                     {
-                        string imageName = Request.Form.Files["image"].FileName;
+                        IFormFile imageFile = Request.Form.Files["image"];
+                        string imageName = imageFile.FileName;
+
+                        //save image with thumb
+                        //ImageFile image = ;
+
+                        EntityEntry<ImageFile> userImage = await testDB.Images.AddAsync(new ImageFile($"{Guid.NewGuid()}{Path.GetExtension(imageName)}"));
+                        await testDB.SaveChangesAsync();
+                        user.ImageId = userImage.Entity.Id;
                         //user.Image = Path.Combine(RootPath, $"images", $"{user.Id}{Path.GetExtension(imageName)}");
-                        user.Image = Path.Combine($"images", $"{Guid.NewGuid()}{Path.GetExtension(imageName)}");
+                        //user.Image = Path.Combine($"images", $"");
                         Logger.Log($" {Request.Form.FirstOrDefault((requestData) => requestData.Key.Equals("image")).Value}");
                         //testDB.Users.Update(userAdded.Entity);
-                        await ImageHelper.SaveImage(Request.Form.Files["image"], user.Image);
+                        await ImageHelper.SaveImage(imageFile, userImage.Entity.Url);
+                        await ImageHelper.SaveImage(imageFile, userImage.Entity.ThumbUrl);
                     }
-                    var userAdded = await testDB.Users.AddAsync(user);
+                    EntityEntry<User> userAdded = await testDB.Users.AddAsync(user);
                     Logger.Log($"ADDED: {userAdded.Entity.Id}");
                     var savedChanges = await testDB.SaveChangesAsync();
                     Logger.Log($"SAVED: {userAdded.Entity.Id} {savedChanges} ");
-                    if (Request.Form.Files["image"] != null)
-                    {
-                        
-                        await ImageHelper.SaveImage(Request.Form.Files["image"], user.Image);
-                    }
-                    return new { user = userAdded.Entity.UserFormat(Request.Host.Value), status = 200 };
+                    return new { user = userAdded.Entity.UserFormat(Request.Host.Value), status = HttpStatusCode.OK };
                 }
                 else
                 {

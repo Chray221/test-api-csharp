@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using TestAPI.ModelContexts;
 using Newtonsoft.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 
 namespace TestAPI
 {
@@ -24,9 +25,30 @@ namespace TestAPI
             // services.AddDbContext<TestContext>((opt) =>
             //opt.UseInMemoryDatabase("UserList"));
 
-            //NOTE: using sql database
-            services.AddDbContext<TestContext>();
+            //NOTE: using sql or sqlite database when sql addition is in the CONTEXT
+            //services.AddDbContext<TestContext>();
 
+            //NOTE: using sql or sqlite database the same as when sql addition is in the CONTEXT
+            services.AddDbContext<TestContext>(options =>
+            {
+                options.UseSqlite("Filename=./test_context.db");
+            });
+
+            //NOTE: FOR SQL
+            //services.AddDbContext<TestContext>(options => {
+            //    options.UseSqlServer("server=.;database=myDb;trusted_connection=true;"));
+            //});
+
+            //NOTE: FOR SQL using appsettings
+            //services.AddDbContext<ConfigurationContext>(options => {
+            //    options.UseSqlServer(Configuration.GetConnectionString("MyConnection"));
+            //});
+            //NOTE: then add in appsettings.json or appsettings.Development.json
+            //=======================
+            //,"AllowedHosts": "*",
+            //"ConnectionStrings": {
+            //    "MyConnection": "server=.;database=myDb;trusted_connection=true;"
+            //  }
 
             services.AddControllers()
             .AddNewtonsoftJson();

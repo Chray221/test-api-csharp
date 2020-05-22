@@ -15,6 +15,7 @@ namespace TestAPI.ModelContexts
     public class TestContext : DbContext
     {
         public DbSet<User> Users { get; set; }
+        public DbSet<ImageFile> Images { get; set; }
         //NOTE: when extending DbContext using Microsoft.EntityFrameworkCore;
         public TestContext(DbContextOptions<TestContext> options) : base(options)
         {
@@ -48,18 +49,19 @@ namespace TestAPI.ModelContexts
             //optionsBuilder.UseSqlServer(@"Server=.\localdb;Database=TestingDB;Trusted_Connection=True;MultipleActiveResultSets=true");
             optionsBuilder
                 .UseLoggerFactory(DbCommandDebugLoggerFactory) // to set the logger for DB query
-                .EnableSensitiveDataLogging() // enable logging
-                .UseSqlite("Filename=./test_context.db")
-                ;
+                .EnableSensitiveDataLogging(); // enable logging
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<User>()
                 .Property(b => b.CreatedAt)
-                .HasDefaultValueSql("datetime('now')");
+                .HasDefaultValueSql("datetime('now')"); // using SQLite
+            //  .HasDefaultValueSql("getdate()"); // using SQL
+
             //modelBuilder.Entity<User>()
             //   .Property(b => b.UpatedAt)
             //.HasComputedColumnSql("datetime('now')");
+
             modelBuilder.Entity<User>().Property(d => d.Id)
                 .ValueGeneratedOnAdd();
             base.OnModelCreating(modelBuilder);

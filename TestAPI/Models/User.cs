@@ -6,37 +6,33 @@ using Newtonsoft.Json;
 
 namespace TestAPI.Models
 {
-    public class User
+    public class User : BaseModel
     {
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int Id { get; set; }
         [Required]
-        public string Username { get; set; }        
+        public string Username { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         [Required]
         public string Password { get; set; }
-        public string Image { get; set; }
+        public int ImageId { get; set; }
+        [ForeignKey("ImageId")]
+        public virtual ImageFile ImageFile { get; set; }
+        //public string Image { get; set; }
+        [NotMapped]
+        public string Image { get { return ImageFile != null ? ImageFile.ThumbUrl : null; } }
 
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public DateTime CreatedAt { get; set; }
-        //[DatabaseGenerated(DatabaseGeneratedOption.Computed)]
-        public DateTime UpatedAt { get; set; }
 
-        public User()
+        public User() : base()
         {
-            CreatedAt = DateTime.Now;
-            UpatedAt = DateTime.Now;
+
         }
 
-        public User(string username, string firstName, string lastName, string password)
+        public User(string username, string firstName, string lastName, string password) : base()
         {
             Username = username;
             FirstName = firstName;
             LastName = lastName;
             Password = password;
-            CreatedAt = DateTime.Now;
-            UpatedAt = DateTime.Now;
         }
 
         public object UserFormat(string rootURL="")

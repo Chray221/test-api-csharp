@@ -30,4 +30,8 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="3.1.4" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.4" />
   </ItemGroup>
+  <ItemGroup>
+    <None Remove="test_context.db-wal" />
+    <None Remove="images\username8_0.jpeg" />
+  </ItemGroup>
 </Project>
