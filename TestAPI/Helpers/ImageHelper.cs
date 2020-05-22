@@ -9,7 +9,7 @@ namespace TestAPI.Helpers
     public static class ImageHelper
     {
 
-        public static async Task<bool> SaveImage(IFormFile postedFile,string filePath)
+        public static async Task<bool> SaveImage(IFormFile postedFile,string filePath, string user_id = "0")
         {
             ////Extract Image File Name.
             //string fileName = System.IO.Path.GetFileName(postedFile.FileName);
@@ -17,23 +17,8 @@ namespace TestAPI.Helpers
             ////Set the Image File Path.
             //string filePath = "~/Uploads/" + fileName;
 
-            ////Save the Image File in Folder.
+            ////Save the Image File in Folder. USING ENTITY
             //postedFile.SaveAs(Server.MapPath(filePath));
-
-            ////Insert the Image File details in Table.
-            //FilesEntities entities = new FilesEntities();
-            //entities.Files.Add(new File
-            //{
-            //    Name = fileName,
-            //    Path = filePath
-            //});
-            //entities.SaveChanges();
-
-            //Redirect to Index Action.
-            //return RedirectToAction("Index");
-
-            //var uploads = Path.Combine(rootPath, "uploads");
-            
             if (postedFile.Length > 0)
             {
                 using (var fileStream = new FileStream(filePath, FileMode.Create))
@@ -44,9 +29,24 @@ namespace TestAPI.Helpers
             return true;
         }
 
+        public static async Task SaveResizeImage(IFormFile postedFile, string filePath, int width, int height)
+        {
+            if (postedFile.Length > 0)
+            {
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await postedFile.CopyToAsync(fileStream);
+                }
+            }
+            //postedFile.CopyToAsync();
+        }
+
         public static byte[] RetrieveImage(string imagePath)
         {
             return File.ReadAllBytes(imagePath);
         }
+
+
+
     }
 }

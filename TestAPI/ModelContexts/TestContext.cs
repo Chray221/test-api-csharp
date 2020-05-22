@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Logging.Debug;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TestAPI.ModelContexts
 {
@@ -58,8 +59,11 @@ namespace TestAPI.ModelContexts
                 .HasDefaultValueSql("datetime('now')");
             //modelBuilder.Entity<User>()
             //   .Property(b => b.UpatedAt)
-               //.HasComputedColumnSql("datetime('now')");
+            //.HasComputedColumnSql("datetime('now')");
+            modelBuilder.Entity<User>().Property(d => d.Id)
+                .ValueGeneratedOnAdd();
             base.OnModelCreating(modelBuilder);
+
         }
     }
 }

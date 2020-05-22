@@ -17,9 +17,8 @@ using TestAPI.Models;
 namespace TestAPI.Controllers
 {
     [Route("[controller]")]
-    public class ImagesController : Controller
+    public class ImagesController : ControllerBase
     {
-
         TestContext testDB;
         private readonly IWebHostEnvironment _environment;
         string RootPath { get { return _environment.WebRootPath ?? _environment.ContentRootPath; } }
@@ -33,23 +32,29 @@ namespace TestAPI.Controllers
 
         // GET images/image.jpg
         [HttpGet("{imageName}")]
-        public object Get(string imageName)
+        public object GetImage(string imageName)
         {
             string filePath = $"{RootPath}/images/{imageName}";
-            Logger.Log(filePath);
-
-            //using (FileStream fs = new FileStream($"{RootPath}/images/{imageName}", FileMode.Open, FileAccess.Read))
-            //{
-            //    HttpResponseMessage response = new HttpResponseMessage();
-            //    response.Content = new StreamContent(fs);
-            //    response.Content.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
-            //    return response;
-            //}
-
+            Logger.Log(filePath);            
+            Logger.Log($"CONNECTIONS: {HttpContext.Connection.LocalIpAddress}:{HttpContext.Connection.LocalPort} | {HttpContext.Connection.RemoteIpAddress}:{HttpContext.Connection.RemotePort} ");
+            
             //download the image
             //return File(ImageHelper.RetrieveImage(filePath), $"image/{Path.GetExtension(imageName)}");
             return PhysicalFile(filePath, $"image/{Path.GetExtension(imageName).Replace(".","")}",true);
-            //return new Uri($"data:image/{Path.GetExtension(imageName)};base64,{(System.Convert.ToBase64String(ImageHelper.RetrieveImage($"{RootPath}/images/{imageName}")))}");
+        }
+
+        // GET images
+        [HttpGet]
+        public object Get()
+        {
+            string imageName = "Logo.png";
+            string filePath = $"{RootPath}/images/{imageName}";
+            Logger.Log(filePath);
+            Logger.Log($"CONNECTIONS: {HttpContext.Connection.LocalIpAddress}:{HttpContext.Connection.LocalPort} | {HttpContext.Connection.RemoteIpAddress}:{HttpContext.Connection.RemotePort} ");
+
+            //download the image
+            //return File(ImageHelper.RetrieveImage(filePath), $"image/{Path.GetExtension(imageName)}");
+            return PhysicalFile(filePath, $"image/{Path.GetExtension(imageName).Replace(".", "")}", true);
         }
     }
 }
