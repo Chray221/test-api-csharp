@@ -20,7 +20,7 @@ namespace TestAPI.Models
         //public string Image { get; set; }
         [NotMapped]
         public string Image { get { return ImageFile != null ? ImageFile.ThumbUrl : null; } }
-
+        //public bool IsVerified { get; set; }
 
         public User() : base()
         {

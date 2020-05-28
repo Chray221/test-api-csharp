@@ -1,24 +1,15 @@
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 namespace TestAPI
 {
     public class Program
     {
-        static string myIP;
         public static void Main(string[] args)
-        {
-            //myIP = GetLocalIPv4();
-            //Console.WriteLine($"HOSTNAME: {myIP}");            
+        {          
             CreateHostBuilder(args).Build().Run();
         }
 
@@ -27,6 +18,7 @@ namespace TestAPI
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+                    //register ip address to be used
                     webBuilder.UseUrls("http://localhost:5000",
                         $"http://{GetLocalIPv4()}:5000"); // my IP Address
                 });
@@ -44,7 +36,7 @@ namespace TestAPI
                     {   // Iterate over each available unicast adresses
                         foreach (UnicastIPAddressInformation ip in adapterProperties.UnicastAddresses)
                         {   // If the IP is a local IPv4 adress
-                            if (ip.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                            if (ip.Address.AddressFamily == AddressFamily.InterNetwork)
                             {   // we got a match!
                                 output = ip.Address.ToString();
                                 break;  // break the loop!!

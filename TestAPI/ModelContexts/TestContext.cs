@@ -9,6 +9,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Logging.Debug;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using TestAPI.Helpers;
 
 namespace TestAPI.ModelContexts
 {
@@ -19,7 +21,15 @@ namespace TestAPI.ModelContexts
         //NOTE: when extending DbContext using Microsoft.EntityFrameworkCore;
         public TestContext(DbContextOptions<TestContext> options) : base(options)
         {
-
+            //NOTE: Update Databse or Migrate new Scheme when extending DbContext  using System.Data.Entity;
+            //Database.SetInitializer(new MigrateDatabaseToLatestVersion<SchoolDBContext, EF6Console.Migrations.Configuration>());
+            //NOTE: Update Databse or Migrate new Scheme when extending DbContext using Microsoft.EntityFrameworkCore;
+            //Logger.Log($"MIGRATIONS_START APPLIED={Database.GetAppliedMigrations().Count()} | PENDING={Database.GetPendingMigrations().Count()}");
+            //if (Database.GetPendingMigrations().Any())
+            //{
+            //    Database.Migrate();
+            //}
+            //Logger.Log($"MIGRATIONS_END APPLIED={Database.GetAppliedMigrations().Count()} | PENDING={Database.GetPendingMigrations().Count()}");
         }
 
         //NOTE: when extending DbContext using System.Data.Entity;
@@ -50,6 +60,7 @@ namespace TestAPI.ModelContexts
             optionsBuilder
                 .UseLoggerFactory(DbCommandDebugLoggerFactory) // to set the logger for DB query
                 .EnableSensitiveDataLogging(); // enable logging
+
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -64,6 +75,7 @@ namespace TestAPI.ModelContexts
 
             modelBuilder.Entity<User>().Property(d => d.Id)
                 .ValueGeneratedOnAdd();
+
             base.OnModelCreating(modelBuilder);
 
         }

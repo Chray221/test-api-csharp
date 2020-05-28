@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
@@ -12,6 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Newtonsoft.Json;
+using SixLabors.ImageSharp;
 using TestAPI.Helpers;
 using TestAPI.ModelContexts;
 using TestAPI.Models;
@@ -20,20 +22,10 @@ namespace TestAPI.Controllers
 {
     [ApiController]
     [Route("v1/api/[controller]")]
-    public class AuthenticationController : ControllerBase
+    public class AuthenticationController : MyControllerBase
     {
-        // initializing DB
-        //TestContext testDB = new TestContext();
-        TestContext testDB;
-
-        string RootPath { get { return Host.HostEnvironment.WebRootPath ?? Host.HostEnvironment.ContentRootPath; } }
-
-        public AuthenticationController(TestContext context, IWebHostEnvironment environment)
+        public AuthenticationController(TestContext context, IWebHostEnvironment environment):base(context, environment)
         {
-            Host.HostEnvironment = environment ?? throw new ArgumentNullException(nameof(environment));
-            testDB = context;
-            testDB.Database.EnsureCreated();
-            Debug.WriteLine($"PATH {RootPath}");
         }
 
         // GET: api/values
@@ -58,12 +50,14 @@ namespace TestAPI.Controllers
                     return MessageExtension.ShowRequiredMessage("Password");
                 }
                 Logger.Log($"QUERY");
-                User userFound = await testDB.Users.FirstOrDefaultAsync((userObject) => userObject.Username.Equals(user.Username));
-                testDB.Entry(userFound).Reference(u => u.ImageFile).Load(); // retreived data from reference entity (ImageFile Property from ImageID)
+                User userFound = await testContext.Users.FirstOrDefaultAsync((userObject) => userObject.Username.Equals(user.Username));
                 if ( userFound != null)
                 {
                     if (SaltHasher.VerifyHash(user.Password, userFound.Password))
+                    {
+                        testContext.Entry(userFound).Reference(u => u.ImageFile).Load(); // retreived data from reference entity (ImageFile Property from ImageID)
                         return new { user = userFound.UserFormat(Request.Host.Value), status = HttpStatusCode.OK };
+                    }
                     return MessageExtension.ShowCustomMessage("Sign In Error", "Username or password mismatched", "Sign Up");                    
                 }
                 else
@@ -104,33 +98,31 @@ namespace TestAPI.Controllers
                 }
 
                 Logger.Log($"QUERY");
-                userFound = await testDB.Users.FirstOrDefaultAsync((userObject) => userObject.Username.Equals(Request.Form["username"].First()));
+                userFound = await testContext.Users.FirstOrDefaultAsync((userObject) => userObject.Username.Equals(Request.Form["username"].First()));
                 if (userFound == null)
                 {
                     User user = new User(Request.Form["username"].First(), Request.Form["first_name"].First(), Request.Form["last_name"].First(), SaltHasher.ComputeHash(Request.Form["password"].First()));
-                                   
-                    if (Request.Form.Files["image"] != null)
+                    IFormFile imageFile = null;
+                    if (Request.Form.Files["image"] is IFormFile imageFormFile)
                     {
-                        IFormFile imageFile = Request.Form.Files["image"];
+                        imageFile = imageFormFile;
                         string imageName = imageFile.FileName;
 
-                        //save image with thumb
-                        //ImageFile image = ;
-
-                        EntityEntry<ImageFile> userImage = await testDB.Images.AddAsync(new ImageFile($"{Guid.NewGuid()}{Path.GetExtension(imageName)}"));
-                        await testDB.SaveChangesAsync();
+                        EntityEntry<ImageFile> userImage = await testContext.Images.AddAsync(new ImageFile($"{Guid.NewGuid()}{Path.GetExtension(imageName)}"));
+                        await testContext.SaveChangesAsync();
                         user.ImageId = userImage.Entity.Id;
-                        //user.Image = Path.Combine(RootPath, $"images", $"{user.Id}{Path.GetExtension(imageName)}");
-                        //user.Image = Path.Combine($"images", $"");
-                        Logger.Log($" {Request.Form.FirstOrDefault((requestData) => requestData.Key.Equals("image")).Value}");
-                        //testDB.Users.Update(userAdded.Entity);
-                        await ImageHelper.SaveImage(imageFile, userImage.Entity.Url);
-                        await ImageHelper.SaveImage(imageFile, userImage.Entity.ThumbUrl);
                     }
-                    EntityEntry<User> userAdded = await testDB.Users.AddAsync(user);
-                    Logger.Log($"ADDED: {userAdded.Entity.Id}");
-                    var savedChanges = await testDB.SaveChangesAsync();
-                    Logger.Log($"SAVED: {userAdded.Entity.Id} {savedChanges} ");
+                    EntityEntry<User> userAdded = await testContext.Users.AddAsync(user);
+                    var savedChanges = await testContext.SaveChangesAsync();
+                    if (imageFile != null)
+                    {
+                        var image = userAdded.Entity.ImageFile;
+                        image.Update(userAdded.Entity.Id);
+                        ImageHelper.SaveThumbImage(imageFile, image.ThumbUrl);
+                        await ImageHelper.SaveImage(imageFile, image.Url);
+                        testContext.Images.Update(image);
+                        await testContext.SaveChangesAsync();
+                    }
                     return new { user = userAdded.Entity.UserFormat(Request.Host.Value), status = HttpStatusCode.OK };
                 }
                 else
@@ -140,30 +132,37 @@ namespace TestAPI.Controllers
             }
             else if ( !Request.HasFormContentType )
             {
-                var user = this.GetRequestJObjectAsync();
-                //if (userFound == null)
-                //{
-                //    user.Password = SaltHasher.ComputeHash(user.Password);
-                //    var userAdded = await testDB.Users.AddAsync(user);                    
-                //    if (Request.Form.ContainsKey("image"))
-                //    {
-                //        string imageName = "ImageName.jpg";
-                //        user.Image = Path.Combine(RootPath, $"user/{userAdded.Entity.Id}",Path.GetExtension(imageName));
-                //        Logger.Log($" {Request.Form.FirstOrDefault((requestData) => requestData.Key.Equals("image")).Value}");
-                //        //if()
-                //        //{
+                var user = await this.GetRequestRObject<User>();
+                if (!user.Username.IsValidString())
+                {
+                    return MessageExtension.ShowRequiredMessage("Username");
+                }
 
-                //        //}
-                //        //ImageHelper.SaveImage(null, user.Image);
-                //        //Request.Form.FirstOrDefault((obj) => obj.Key.Equals("image")).Value.
-                //    }
-                //    await testDB.SaveChangesAsync();
-                //    return new { user = userAdded.Entity.UserFormat(), status = 200 };
-                //}
-                //else
-                //{
-                //    return MessageExtension.ShowCustomMessage("Sign Up Error", "Username is already taken", "Okay");
-                //}
+                if (!user.FirstName.IsValidString())
+                {
+                    return MessageExtension.ShowRequiredMessage("Firstname");
+                }
+
+                if (!user.LastName.IsValidString())
+                {
+                    return MessageExtension.ShowRequiredMessage("Lastname");
+                }
+
+                if (!user.Password.IsValidString())
+                {
+                    return MessageExtension.ShowRequiredMessage("Password");
+                }
+                if (userFound == null)
+                {
+                    user.Password = SaltHasher.ComputeHash(user.Password);
+                    var userAdded = await testContext.Users.AddAsync(user);
+                    await testContext.SaveChangesAsync();
+                    return new { user = userAdded.Entity.UserFormat(), status = 200 };
+                }
+                else
+                {
+                    return MessageExtension.ShowCustomMessage("Sign Up Error", "Username is already taken", "Okay");
+                }
             }
 
             return NotFound();

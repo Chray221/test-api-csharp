@@ -28,27 +28,33 @@ namespace TestAPI
             //NOTE: using sql or sqlite database when sql addition is in the CONTEXT
             //services.AddDbContext<TestContext>();
 
-            //NOTE: using sql or sqlite database the same as when sql addition is in the CONTEXT
+            //NOTE: using sqlite database the same as when sql addition is in the CONTEXT
+            //services.AddDbContext<TestContext>(options =>
+            //{
+            //    options.UseSqlite("Filename=./test_context.db");
+            //});
+
+            //NOTE: using sqlite database the same as when sql addition is in the CONTEXT using appsettings
             services.AddDbContext<TestContext>(options =>
             {
-                options.UseSqlite("Filename=./test_context.db");
+                options.UseSqlite(Configuration.GetConnectionString("MySQLiteConnection2"));
             });
 
             //NOTE: FOR SQL
-            //services.AddDbContext<TestContext>(options => {
-            //    options.UseSqlServer("server=.;database=myDb;trusted_connection=true;"));
+            //services.AddDbContext<TestContext>(options =>
+            //{
+            //    options.UseSqlServer("Server=(localdb)\\mssqllocaldb;Database=MvcMovieContext-2;Trusted_Connection=True;MultipleActiveResultSets=true");
             //});
 
             //NOTE: FOR SQL using appsettings
-            //services.AddDbContext<ConfigurationContext>(options => {
-            //    options.UseSqlServer(Configuration.GetConnectionString("MyConnection"));
-            //});
+            //services.AddDbContext<TestContext>(options =>
+            //    options.UseSqlServer(Configuration.GetConnectionString("MvcMovieContext")));
             //NOTE: then add in appsettings.json or appsettings.Development.json
             //=======================
             //,"AllowedHosts": "*",
             //"ConnectionStrings": {
-            //    "MyConnection": "server=.;database=myDb;trusted_connection=true;"
-            //  }
+            //    "MvcMovieContext": "Server=(localdb)\\mssqllocaldb;Database=MvcMovieContext-2;Trusted_Connection=True;MultipleActiveResultSets=true"
+            //}
 
             services.AddControllers()
             .AddNewtonsoftJson();

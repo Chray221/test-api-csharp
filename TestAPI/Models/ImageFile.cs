@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using TestAPI.Helpers;
 
 namespace TestAPI.Models
 {
@@ -15,6 +16,13 @@ namespace TestAPI.Models
         {
             Url = Path.Combine($"images", $"{ImageName}");
             ThumbUrl = Path.Combine($"images", $"thumb_{ImageName}");
+        }
+
+        public void Update(int UsedId)
+        {
+            ImageHelper.CreateFolder($"images/{UsedId}");
+            Url = Url.Replace("images",$"images/{UsedId}");
+            ThumbUrl = ThumbUrl.Replace("images", $"images/{UsedId}");
         }
     }
 }
