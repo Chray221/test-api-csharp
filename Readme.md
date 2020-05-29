@@ -24,64 +24,61 @@ TestAPI is a C# .Net MVC API using Visual Studio as the IDE.
 - [EntityFrameWork](https://docs.microsoft.com/en-us/ef/)
     - using QUERY Loggin
         - add in `Context` class    
-``` csharp
-    -------------------------------------------------------------------------------------------------------------------------------
+        
+        ``` csharp
         public static readonly LoggerFactory DbCommandDebugLoggerFactory
           = new LoggerFactory(new[] {
           new DebugLoggerProvider()
           });
-    -------------------------------------------------------------------------------------------------------------------------------
-```    
+        ```    
 
         - add in `Context's OnConfiguring()`:    
-``` csharp
-    -------------------------------------------------------------------------------------------------------------------------------
+        
+        
+        ``` csharp
+    
         optionsBuilder
                 .UseLoggerFactory(DbCommandDebugLoggerFactory) // to set the logger for DB query
                 .EnableSensitiveDataLogging(); // enable logging
-    -------------------------------------------------------------------------------------------------------------------------------
-```    
+    
+        ```    
     - SQL property options add in `OnModelCreating(ModelBuilder modelBuilder)`
         - using SQLite:    
-``` csharp
-    -------------------------------------------------------------------------------------------------------------------------------
-                modelBuilder.Entity<User>()
-                    .Property(b => b.CreatedAt)
-                    .HasDefaultValueSql("datetime('now')");
-    -------------------------------------------------------------------------------------------------------------------------------
-```    
-            default value in creating entry:
-            add this in model:    
-``` csharp
-    -------------------------------------------------------------------------------------------------------------------------------
-            [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    -------------------------------------------------------------------------------------------------------------------------------
-```     
-``` csharp
-    -------------------------------------------------------------------------------------------------------------------------------
+        
+        ``` csharp
+        modelBuilder.Entity<User>()
+            .Property(b => b.CreatedAt)
+            .HasDefaultValueSql("datetime('now')");
+    
+        ```  
+        
+        default value in creating entry:
+        add this in model:    
+        
+        ``` csharp
+        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]    
+        ```     
+        ``` csharp    
             modelBuilder.Entity<User>().Property(d => d.Id)
-                .ValueGeneratedOnAdd();
-    -------------------------------------------------------------------------------------------------------------------------------
-```    
+                .ValueGeneratedOnAdd();    
+        ```    
             
         
 - [Newtonsoft.Json](https://www.newtonsoft.com/json)
     - Add in Startup.cs ConfigureServices()     
-``` csharp
-    -------------------------------------------------------------------------------------------------------------------------------
+        ``` csharp
+    
         services.AddControllers()
             .AddNewtonsoftJson();
-    -------------------------------------------------------------------------------------------------------------------------------
-```
+    
+        ```
     - To change the casing to camel:    
-``` csharp
-    -------------------------------------------------------------------------------------------------------------------------------
+        ``` csharp    
         services.AddMvc()
             .AddNewtonsoftJson(options =>
                    options.SerializerSettings.ContractResolver =
-                        new DefaultContractResolver() { NamingStrategy = new SnakeCaseNamingStrategy() });
-    -------------------------------------------------------------------------------------------------------------------------------
-```
+                        new DefaultContractResolver() { NamingStrategy = new SnakeCaseNamingStrategy() });    
+        ```
 - [SixLabors.ImageSharp](https://github.com/SixLabors/ImageSharp)
 
 ### How do I get set up? ###
@@ -96,8 +93,8 @@ TestAPI is a C# .Net MVC API using Visual Studio as the IDE.
 #### How To Add Local Server ? ####
 - Goto Program.cs
 - Create method GetLocalIPv4()  
-``` csharp
-    -------------------------------------------------------------------------------------------------------------------------------
+    ``` csharp
+    
     using System.Net.NetworkInformation;
     using System.Net.Sockets;
     
@@ -128,22 +125,18 @@ TestAPI is a C# .Net MVC API using Visual Studio as the IDE.
             // Return results
             return output;
         }
-    -------------------------------------------------------------------------------------------------------------------------------
-```
+    
+    ```
 - Add to CreateHostBuilder property:    
-```  csharp
-    -------------------------------------------------------------------------------------------------------------------------------
-       webBuilder.UseUrls("http://localhost:5000",
-                        $"http://{GetLocalIPv4()}:5000"); // my IP Address
-    -------------------------------------------------------------------------------------------------------------------------------
-```
+    ```  csharp    
+   webBuilder.UseUrls("http://localhost:5000",
+                    $"http://{GetLocalIPv4()}:5000"); // my IP Address    
+    ```
 - To run
     - in terminal   
-``` sh
-    -------------------------------------------------------------------------------------------------------------------------------
-        dotnet run
-    -------------------------------------------------------------------------------------------------------------------------------
-```
+    ``` sh    
+    dotnet run    
+    ```
     - Visual Studio
         Click Run
 
@@ -152,52 +145,45 @@ TestAPI is a C# .Net MVC API using Visual Studio as the IDE.
 ##### Using EntityFramework
 - Add in `Startup.cs` `ConfigureServices()`
     - using In Memory   
-``` csharp
-    -------------------------------------------------------------------------------------------------------------------------------
+        ``` csharp    
         services.AddDbContext<TestContext>((opt) =>
-            opt.UseInMemoryDatabase("UserList"));
-    -------------------------------------------------------------------------------------------------------------------------------
-```
+            opt.UseInMemoryDatabase("UserList"));    
+        ```
     - using SQLite  
-``` csharp
+        ``` csharp
         services.AddDbContext<TestContext>(options =>
         {
             options.UseSqlite("Filename=./test_context.db"); //create sqlite db in project
         });
-```    
+        ```    
     - using SQL     
-``` csharp
-    -------------------------------------------------------------------------------------------------------------------------------
+        ``` csharp
+    
         services.AddDbContext<ConfigurationContext>(options => {
             options.UseSqlServer(Configuration.GetConnectionString("MyConnection"));
-        });
-    -------------------------------------------------------------------------------------------------------------------------------
-```    
+        });    
+        ```    
         Then ADD in `appsettings.json` or `appsettings.Development.json`    
-``` csharp
-    -------------------------------------------------------------------------------------------------------------------------------
+        ``` csharp    
         ,"AllowedHosts": "*",
             "ConnectionStrings": {
                 "MyConnection": "server=.;database=myDb;trusted_connection=true;"
-            }
-    -------------------------------------------------------------------------------------------------------------------------------
-```
+            }    
+        ```
 
 #### How To Migrate
 ##### Using EntityFramework 6.4.4
 - First     
-``` sh
-        dotnet ef migrations add InitialCreate
-```
+    ``` sh
+    dotnet ef migrations add InitialCreate
+    ```
 - Then Add to `Context's Constructor()`     
-```  csharp
-    -------------------------------------------------------------------------------------------------------------------------------
-       if (Database.GetPendingMigrations().Any())
-        {
-            Database.Migrate();
-        }
-    -------------------------------------------------------------------------------------------------------------------------------
-```
+    ```  csharp    
+   if (Database.GetPendingMigrations().Any())
+    {
+        Database.Migrate();
+    }    
+    ```
 ### Contribution guidelines ###
 
 * Writing tests
