@@ -152,6 +152,7 @@ namespace TestAPI.Controllers
                 {
                     return MessageExtension.ShowRequiredMessage("Password");
                 }
+                userFound = await testContext.Users.FirstOrDefaultAsync((userObject) => userObject.Username.Equals(user.Username.First()));
                 if (userFound == null)
                 {
                     user.Password = SaltHasher.ComputeHash(user.Password);

@@ -140,6 +140,7 @@ TestAPI is a C# .Net MVC API using Visual Studio as the IDE.
     - Visual Studio
         Click Run
 
+#### How To Add Server ? ####
 
 #### How To Add Database
 ##### Using EntityFramework
@@ -170,6 +171,22 @@ TestAPI is a C# .Net MVC API using Visual Studio as the IDE.
                 "MyConnection": "server=.;database=myDb;trusted_connection=true;"
             }    
         ```
+    - For SQL Database using docker (SQL FOR MAC)
+        - https://hub.docker.com/editions/community/docker-ce-desktop-mac
+        - https://www.c-sharpcorner.com/article/entity-framework-core-with-sql-server-in-docker-container/
+        - FOR DOCKER 
+            - Open Docker
+            - Goto folder
+            - enter in terminal to build project
+                ``` sh
+                docker build -t [dockerfilename]
+                ```
+            - enter in terminal to run project server
+                ``` sh
+                docker run -d -p 80:80 --name docker-tutorial docker1 01tutorial
+                ```
+
+
 
 #### How To Migrate
 ##### Using EntityFramework 6.4.4

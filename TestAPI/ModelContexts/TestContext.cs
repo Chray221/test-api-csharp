@@ -23,6 +23,10 @@ namespace TestAPI.ModelContexts
         {
             //NOTE: Update Databse or Migrate new Scheme when extending DbContext  using System.Data.Entity;
             //Database.SetInitializer(new MigrateDatabaseToLatestVersion<SchoolDBContext, EF6Console.Migrations.Configuration>());
+
+            //NOTE:
+            Database.EnsureCreated();
+
             //NOTE: Update Databse or Migrate new Scheme when extending DbContext using Microsoft.EntityFrameworkCore;
             //Logger.Log($"MIGRATIONS_START APPLIED={Database.GetAppliedMigrations().Count()} | PENDING={Database.GetPendingMigrations().Count()}");
             //if (Database.GetPendingMigrations().Any())
@@ -72,6 +76,10 @@ namespace TestAPI.ModelContexts
             //modelBuilder.Entity<User>()
             //   .Property(b => b.UpatedAt)
             //.HasComputedColumnSql("datetime('now')");
+
+            modelBuilder.Entity<User>()
+                .Property(b => b.ImageId)
+                .HasDefaultValue(-1);
 
             modelBuilder.Entity<User>().Property(d => d.Id)
                 .ValueGeneratedOnAdd();

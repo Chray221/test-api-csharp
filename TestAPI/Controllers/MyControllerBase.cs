@@ -17,7 +17,6 @@ namespace TestAPI.Controllers
         {
             Host.HostEnvironment = environment ?? throw new ArgumentNullException(nameof(environment));
             testContext = context;
-            testContext.Database.EnsureCreated();
             Logger.Log($"PATH {RootPath}");
         }
     }

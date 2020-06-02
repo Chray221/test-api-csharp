@@ -9,6 +9,7 @@ namespace TestAPI.Helpers
             msg = $"{DateTime.Now.ToString("HH:mm:ss tt")} [{Title}]-[{memberName}]: {msg}";
 #if DEBUG
             System.Diagnostics.Debug.WriteLine(msg);
+            Console.WriteLine(msg);
 #elif RELEASE
 
 #else

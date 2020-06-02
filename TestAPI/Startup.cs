@@ -6,6 +6,7 @@ using Microsoft.Extensions.Hosting;
 using TestAPI.ModelContexts;
 using Newtonsoft.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
 
 namespace TestAPI
 {
@@ -37,7 +38,7 @@ namespace TestAPI
             //NOTE: using sqlite database the same as when sql addition is in the CONTEXT using appsettings
             services.AddDbContext<TestContext>(options =>
             {
-                options.UseSqlite(Configuration.GetConnectionString("MySQLiteConnection2"));
+                options.UseSqlite(Configuration.GetConnectionString("MySQLiteSourceConnection"));
             });
 
             //NOTE: FOR SQL
@@ -48,7 +49,7 @@ namespace TestAPI
 
             //NOTE: FOR SQL using appsettings
             //services.AddDbContext<TestContext>(options =>
-            //    options.UseSqlServer(Configuration.GetConnectionString("MvcMovieContext")));
+            //    options.UseSqlServer(Configuration.GetConnectionString("LocalDBConnection")));
             //NOTE: then add in appsettings.json or appsettings.Development.json
             //=======================
             //,"AllowedHosts": "*",
@@ -57,7 +58,9 @@ namespace TestAPI
             //}
 
             services.AddControllers()
-            .AddNewtonsoftJson();
+            .AddNewtonsoftJson(options =>
+                   options.SerializerSettings.ContractResolver =
+                        new DefaultContractResolver() { NamingStrategy = new SnakeCaseNamingStrategy() });
 
             //NOTE: change Newtonsoft Naming Policy to Snake Casing
             services.AddMvc()
@@ -70,7 +73,7 @@ namespace TestAPI
             //    .AddJsonOptions(options =>
             //    options.JsonSerializerOptions.PropertyNamingPolicy =
             //        new SnakeCasePropertyNamingPolicy());
-
+            //services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
             services.AddControllers();
         }
 

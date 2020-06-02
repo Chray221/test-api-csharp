@@ -1,0 +1,39 @@
+version: '3.4'
+
+services:
+  testapi:
+    links:  
+      - sqlserverService 
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80;http://+:5000
+    ports:
+      - "80"
+      - "443"
+      - "5000:5000"
+    volumes:
+      - ~/.aspnet/https:/root/.aspnet/https:ro
+      - ~/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
+  
+#  testapiclient:
+#    image: ${DOCKER_REGISTRY-}testapiclient
+#    environment:
+#      - TestApiURL=http://localhost:5000/
+#    ports:
+#      - "5000"
+#    build:
+#      context: .
+#      dockerfile: TestAPI/Dockerfile
+
+ # sqlserverService:  
+ #   image: mcr.microsoft.com/mssql/server:2017-latest
+ #   hostname: 'localhostDB'  
+ #   environment:  
+ #     ACCEPT_EULA: Y  
+ #     SA_PASSWORD: "p@55w0rc1"  
+ #   volumes:  
+ #     - ./data/mssql:/var/opt/mssql3  
+ #   ports:  
+ #     - '5001:5001'  
+ #   expose:  
+ #     - 5001  

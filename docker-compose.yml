@@ -1,0 +1,35 @@
+version: '3.4'
+
+services:
+  testapi:
+    links:  
+      - sqlserverService  
+    image: ${DOCKER_REGISTRY-}testapi
+    ports:
+      - "5000:5000"
+    build:
+      context: .
+      dockerfile: TestAPI/Dockerfile
+
+#  testapiclient:
+#    image: ${DOCKER_REGISTRY-}testapiclient
+#    environment:
+#      - TestApiURL=http://testapi/
+#    ports:
+#      - "5000"
+#    build:
+#      context: .
+#      dockerfile: TestAPI/Dockerfile
+
+  sqlserverService:  
+    image: mcr.microsoft.com/mssql/server:2017-latest
+    hostname: 'localhostDB'  
+    environment:  
+      ACCEPT_EULA: Y  
+      SA_PASSWORD: "p@55w0rc1"  
+#    volumes:  
+#      - ./data/mssql:/var/opt/mssql3  
+    ports:  
+      - '1433:1433'  
+    expose:  
+      - 1433  

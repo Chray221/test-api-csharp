@@ -1,6 +1,8 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore.Update.Internal;
 using Newtonsoft.Json;
 
@@ -10,10 +12,13 @@ namespace TestAPI.Models
     {
         [Required]
         public string Username { get; set; }
+        [JsonProperty(PropertyName = "first_name")]
         public string FirstName { get; set; }
+        [JsonProperty(PropertyName = "last_name")]
         public string LastName { get; set; }
         [Required]
         public string Password { get; set; }
+        [AllowNull]
         public int ImageId { get; set; }
         [ForeignKey("ImageId")]
         public virtual ImageFile ImageFile { get; set; }
