@@ -7,6 +7,8 @@ using TestAPI.ModelContexts;
 using Newtonsoft.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
+using TestAPI.Models;
+using Microsoft.AspNetCore.Identity;
 
 namespace TestAPI
 {
@@ -36,10 +38,10 @@ namespace TestAPI
             //});
 
             //NOTE: using sqlite database the same as when sql addition is in the CONTEXT using appsettings
-            services.AddDbContext<TestContext>(options =>
-            {
-                options.UseSqlite(Configuration.GetConnectionString("MySQLiteSourceConnection"));
-            });
+            //services.AddDbContext<TestContext>(options =>
+            //{
+            //    options.UseSqlite(Configuration.GetConnectionString("MySQLiteSourceConnection"));
+            //});
 
             //NOTE: FOR SQL
             //services.AddDbContext<TestContext>(options =>
@@ -49,13 +51,20 @@ namespace TestAPI
 
             //NOTE: FOR SQL using appsettings
             //services.AddDbContext<TestContext>(options =>
-            //    options.UseSqlServer(Configuration.GetConnectionString("LocalDBConnection")));
+            //    options.UseSqlServer(Configuration.GetConnectionString("MyPostgresqlConnTemp1")));
             //NOTE: then add in appsettings.json or appsettings.Development.json
             //=======================
             //,"AllowedHosts": "*",
             //"ConnectionStrings": {
             //    "MvcMovieContext": "Server=(localdb)\\mssqllocaldb;Database=MvcMovieContext-2;Trusted_Connection=True;MultipleActiveResultSets=true"
             //}
+
+            // using Postgresql database
+            services.AddDbContext<TestContext>(options =>
+                options.UseNpgsql(Configuration.GetConnectionString("MyPostgresqlConn")));
+
+            //services.AddIdentity<User, IdentityRole<long>>()
+            //    .AddDefaultTokenProviders();
 
             services.AddControllers()
             .AddNewtonsoftJson(options =>

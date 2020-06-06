@@ -185,7 +185,60 @@ TestAPI is a C# .Net MVC API using Visual Studio as the IDE.
                 ``` sh
                 docker run -d -p 80:80 --name docker-tutorial docker1 01tutorial
                 ```
-
+##### [Using Posgresql in C#](https://medium.com/@agavatar/webapi-with-net-core-and-postgres-in-visual-studio-code-8b3587d12823) or [this](https://medium.com/@RobertKhou/asp-net-core-mvc-identity-using-postgresql-database-bc52255f67c4) #####
+- install PostgreSQL
+    ``` sh
+    brew install postgresql
+    ```
+- ### postgresql ###
+    - `To migrate existing data` from a previous major version of PostgreSQL run:
+        ``` sh
+        brew postgresql-upgrade-database
+        ```
+    - To have `launchd start postgresql now and restart at login`:
+        ``` sh 
+        brew services start postgresql
+        ```
+    - Or, if you don't want/need a `background service` you can just run:
+        ``` sh
+        pg_ctl -D /usr/local/var/postgres start
+        ```
+- using psql
+    - Creating database
+        ``` sh 
+        psql template1
+        ```
+    - to create database
+        ``` sh
+        create database [name of database];
+        ```
+    - Creating role 
+        ``` sh
+        create ROLE [role_name] WITH SUPERUSER CREATEDB CREATEROLE LOGIN ENCRYPTED PASSWORD '[role_password]';
+        ```
+    - Change Role
+        ``` sh
+        psql -d [database_name]] -U [role_name]]
+        ```
+- Adding in c# WEB API
+    - add Packages if .net version 3.1.2
+        - [Npgsql.EntityFrameworkCore.PostgreSQL](https://www.nuget.org/packages/Npgsql.EntityFrameworkCore.PostgreSQL/3.1.2)
+        - [Npgsql.EntityFrameworkCore.PostgreSQL.Design v1.1.0](https://www.nuget.org/packages/Npgsql.EntityFrameworkCore.PostgreSQL.Design/1.1.0)
+    - add to `appsettings.json` or `appsettings.development.json`
+        ``` json
+        "ConnectionStrings": {
+            "MyPostgresqlConn": "Server=localhost; Port=5432; Database=mydb; Username=csharpuser; Password=csharpuserpassword"
+        }
+        ```
+        where
+        ``` json
+        "MyPostgresqlConn": "Server=localhost; Port=5432; Database=[name of database]; Username=[role_name]; Password=[role_password]"
+        ```
+    - add in `Startup.cs` `ConfigureServices(IServiceCollection services)`
+        ``` csharp        
+        services.AddDbContext<TestContext>(options =>
+                options.UseNpgsql(Configuration.GetConnectionString("MyPostgresqlConn")));
+        ```
 
 
 #### How To Migrate
@@ -196,18 +249,9 @@ TestAPI is a C# .Net MVC API using Visual Studio as the IDE.
     ```
 - Then Add to `Context's Constructor()`     
     ```  csharp    
-   if (Database.GetPendingMigrations().Any())
+    if (Database.GetPendingMigrations().Any())
     {
         Database.Migrate();
     }    
     ```
-### Contribution guidelines ###
 
-* Writing tests
-* Code review
-* Other guidelines
-
-### Who do I talk to? ###
-
-* Repo owner or admin
-* Other community or team contact

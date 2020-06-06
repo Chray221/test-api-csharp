@@ -68,9 +68,9 @@ namespace TestAPI.ModelContexts
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<User>()
-                .Property(b => b.CreatedAt)
-                .HasDefaultValueSql("datetime('now')"); // using SQLite
+            //modelBuilder.Entity<User>()
+            //    .Property(b => b.CreatedAt)
+            //  //.HasDefaultValueSql("datetime('now')"); // using SQLite
             //  .HasDefaultValueSql("getdate()"); // using SQL
 
             //modelBuilder.Entity<User>()
