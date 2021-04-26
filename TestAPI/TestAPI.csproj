@@ -12,6 +12,12 @@
     <Folder Include="Helpers\" />
     <Folder Include="ModelContexts\" />
     <Folder Include="images\" />
+    <Folder Include="Models\Curbside\" />
+    <Folder Include="Controllers\Curbside\" />
+    <Folder Include="Extensions\" />
+    <Folder Include="Enums\" />
+    <Folder Include="Enums\Curbside\" />
+    <Folder Include="Migrations\CurbsideContextMigration\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="3.1.4">

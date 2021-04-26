@@ -17,7 +17,7 @@ using TestAPI.Models;
 namespace TestAPI.Controllers
 {
     [Route("[controller]")]
-    public class ImagesController : MyControllerBase
+    public class ImagesController : MyControllerBase<TestContext>
     {
 
         public ImagesController(TestContext context, IWebHostEnvironment environment):base(context, environment)

@@ -9,6 +9,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using TestAPI.Models;
 using Microsoft.AspNetCore.Identity;
+using TestAPI.Helpers;
+using Newtonsoft.Json;
 
 namespace TestAPI
 {
@@ -62,6 +64,8 @@ namespace TestAPI
             // using Postgresql database
             services.AddDbContext<TestContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("MyPostgresqlConn")));
+            services.AddDbContext<CurbsideContext>(options =>
+                options.UseNpgsql(Configuration.GetConnectionString("CurbsidePostgresqlConn")));
 
             //services.AddIdentity<User, IdentityRole<long>>()
             //    .AddDefaultTokenProviders();
@@ -77,13 +81,54 @@ namespace TestAPI
                    options.SerializerSettings.ContractResolver =
                         new DefaultContractResolver() { NamingStrategy = new SnakeCaseNamingStrategy() });
 
+            services.AddMvcCore()
+                .AddNewtonsoftJson(options =>
+                   options.SerializerSettings.ContractResolver =
+                        new DefaultContractResolver() { NamingStrategy = new SnakeCaseNamingStrategy() });
+            SetupGlobalOptions();
+
             //NOTE: change System.Text.Json Naming Policy to Snake Casing
             //services.AddMvc()
             //    .AddJsonOptions(options =>
             //    options.JsonSerializerOptions.PropertyNamingPolicy =
             //        new SnakeCasePropertyNamingPolicy());
             //services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
-            services.AddControllers();
+
+            services.AddMvc()
+                .SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
+                .ConfigureApiBehaviorOptions(options =>
+                {
+                    options.InvalidModelStateResponseFactory = context =>
+                    {
+                        var problems = new BadRequestMessageFormatter(context);
+                        //return new BadRequestObjectResult(problems);
+                        return new BadRequestObjectResult(problems.GetCustomBadRequestFormat());
+                    };
+                });
+
+            //generic bad request message
+            //services.Configure<ApiBehaviorOptions>(a =>
+            //{
+            //    a.InvalidModelStateResponseFactory = context =>
+            //    {
+            //        var problemDetails = new BadRequestMessageFormatter(context);
+            //        //return MessageExtension.ShowRequiredMessage("asdf");
+            //        return new BadRequestObjectResult(problemDetails)
+            //        {
+            //            Value = MessageExtension.ShowRequiredMessage("asdf"),
+            //            ContentTypes = { "application / problem + json", "application / problem + xml" }
+            //        };
+            //    };
+            //});
+        }
+
+        public void SetupGlobalOptions()
+        {
+            JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+            {
+                Formatting = Formatting.Indented,
+                ContractResolver = new DefaultContractResolver() { NamingStrategy = new SnakeCaseNamingStrategy() }
+            };
         }
 
         //NOTE: This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

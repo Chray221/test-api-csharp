@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Linq;
 using System.Net;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace TestAPI.Helpers
 {
@@ -35,13 +38,54 @@ namespace TestAPI.Helpers
         public static object ShowCustomMessage(string title, string content, string button = "Okay", string icon = null, int icon_type = 0, HttpStatusCode statusCode = HttpStatusCode.OK)
         {
             //status = 200 default
-            return new { custom_message = new { title, icon, icon_type, content, button },status = statusCode };
+            return new { custom_message = new { title, icon, icon_type, content, button }, status = statusCode };
         }
 
         public static object ShowRequiredMessage(string propertyName)
         {
             // status = 422
-            return new { error = $"{propertyName} is required!." ,status = HttpStatusCode.UnprocessableEntity };
+            return new { error = $"{propertyName} is required!.", status = HttpStatusCode.UnprocessableEntity };
+        }
+    }
+
+    public class BadRequestMessageFormatter : ValidationProblemDetails
+    {
+        ActionContext Context;
+        public BadRequestMessageFormatter(ActionContext context)
+        {
+            Context = context;
+            Title = "Invalid arguments to the API";
+            Detail = "The inputs supplied to the API are invalid";
+            Status = 400;
+            ConstructErrorMessages(context);
+            Type = context.HttpContext.TraceIdentifier;
+        }
+
+        private void ConstructErrorMessages(ActionContext context)
+        {
+            foreach (var keyModelStatePair in context.ModelState)
+            {
+                var key = keyModelStatePair.Key;
+                MessageExtension.ShowRequiredMessage(key);
+            }
+        }
+
+
+        string GetErrorMessage(ModelError error)
+        {
+            return string.IsNullOrEmpty(error.ErrorMessage) ?
+                "The input was not valid." :
+            error.ErrorMessage;
+        }
+
+        public object GetCustomBadRequestFormat()
+        {
+            if(Context.ModelState.Any())
+            {
+                //return MessageExtension.ShowRequiredMessage(Context.ModelState.First().Key);
+                return Context.ModelState.First().Value;
+            }
+            return null;
         }
     }
 }

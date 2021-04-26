@@ -84,6 +84,11 @@ namespace TestAPI.ModelContexts
             modelBuilder.Entity<User>().Property(d => d.Id)
                 .ValueGeneratedOnAdd();
 
+            modelBuilder.Entity<User>().Property(d => d.CreatedAt)
+               .ValueGeneratedOnAdd();
+            modelBuilder.Entity<User>().Property(d => d.UpdatedAt)
+               .ValueGeneratedOnAddOrUpdate();
+
             base.OnModelCreating(modelBuilder);
 
         }

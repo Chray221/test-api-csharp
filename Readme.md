@@ -241,11 +241,15 @@ TestAPI is a C# .Net MVC API using Visual Studio as the IDE.
         ```
 
 
-#### How To Migrate
+#### How To Migrate (creating migration)
 ##### Using EntityFramework 6.4.4
 - First     
     ``` sh
     dotnet ef migrations add InitialCreate
+    ```
+    or
+    ``` sh
+    dotnet ef migrations add [migration name] --context [dbcontext name] --output-dir Migrations/CurbisdeContextMigration
     ```
 - Then Add to `Context's Constructor()`     
     ```  csharp    
@@ -254,4 +258,63 @@ TestAPI is a C# .Net MVC API using Visual Studio as the IDE.
         Database.Migrate();
     }    
     ```
+### How To Add Custom Bad Request Format Return
+- First create a a class
+    ``` csharp
+    public class BadRequestMessageFormatter : ValidationProblemDetails
+    {
+        ActionContext Context;
+        // change the message of the default message format
+        public BadRequestMessageFormatter(ActionContext context)
+        {
+            Context = context;
+            Title = "Invalid arguments to the API";
+            Detail = "The inputs supplied to the API are invalid";
+            Status = 400;
+            ConstructErrorMessages(context);
+            Type = context.HttpContext.TraceIdentifier;
+        }
 
+        // to get or view the errors in error message response model
+        string GetErrorMessage(ModelError error)
+        {
+            return string.IsNullOrEmpty(error.ErrorMessage) ?
+                "The input was not valid." :
+            error.ErrorMessage;
+        }
+
+        // my custom message where i have my own format
+        /*            
+            public static object ShowRequiredMessage(string propertyName)
+            {
+                // status = 422
+                return new { error = $"{propertyName} is required!.", status = HttpStatusCode.UnprocessableEntity };
+            }
+        */
+        public object GetCustomBadRequestFormat()
+        {
+            if(Context.ModelState.Any())
+            {
+                return MessageExtension.ShowRequiredMessage(Context.ModelState.First().Key);
+            }
+            return null;
+        }
+    }
+    ```
+- the add this in Startup.cs
+    ``` csharp
+        services.AddMvc()
+                .SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
+                .ConfigureApiBehaviorOptions(options =>
+                {
+                    options.InvalidModelStateResponseFactory = context =>
+                    {
+                        var problems = new BadRequestMessageFormatter(context);
+                        //using default format
+                        //return new BadRequestObjectResult(problems);
+
+                        //using custom format
+                        return new BadRequestObjectResult(problems.GetCustomBadRequestFormat());
+                    };
+                });
+    ```

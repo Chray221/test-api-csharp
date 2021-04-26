@@ -16,6 +16,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using TestAPI.Controllers;
+using Microsoft.EntityFrameworkCore;
 
 namespace TestAPI.Helpers
 {
@@ -81,7 +82,7 @@ namespace TestAPI.Helpers
             }
         }
 
-        public static string GetUserImage(this MyControllerBase controller,string imagePathName)
+        public static string GetUserImage<T>(this MyControllerBase<T> controller,string imagePathName) where T : DbContext
         {
             return $"{controller.RootPath}/images/{imagePathName}";
         }
