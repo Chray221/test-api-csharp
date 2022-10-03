@@ -255,3 +255,8 @@ TestAPI is a C# .Net MVC API using Visual Studio as the IDE.
     }    
     ```
 
+#### How to add Swagger
+- First
+    insall nuget Swashbuckle.AspNetCore and Swashbuckle.AspNetCore.Annotations
+- 
+
