@@ -3,6 +3,7 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace TestAPI
 {
@@ -21,6 +22,15 @@ namespace TestAPI
                     //register ip address to be used
                     webBuilder.UseUrls("http://localhost:5000",
                         $"http://{GetLocalIPv4()}:5000"); // my IP Address
+                    //added logging configuration
+                    webBuilder.ConfigureLogging( (hostingContext, logging) =>
+                   {
+                       logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
+                       logging.AddDebug();
+                       logging.AddConsole();
+                       logging.AddEventSourceLogger();
+                       //logging.AddEventLog();
+                   });
                 });
 
         internal static string GetLocalIPv4(NetworkInterfaceType _type = NetworkInterfaceType.Ethernet)
