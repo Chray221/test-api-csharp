@@ -1,25 +1,21 @@
-﻿using System;
-//using Microsoft.EntityFrameworkCore;
+﻿//using Microsoft.EntityFrameworkCore;
 //using Microsoft.Extensions.Logging;
 //using Microsoft.Extensions.Logging.Console;
-using TestAPI.Models;
 //using System.Data.Entity;
+using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Logging.Debug;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using TestAPI.Helpers;
+using TestAPI.Data;
 
 namespace TestAPI.ModelContexts
 {
-    public class TestContext : DbContext
+    public class TestDbContext : DbContext
     {
         public DbSet<User> Users { get; set; }
         public DbSet<ImageFile> Images { get; set; }
         //NOTE: when extending DbContext using Microsoft.EntityFrameworkCore;
-        public TestContext(DbContextOptions<TestContext> options) : base(options)
+        public TestDbContext(DbContextOptions<TestDbContext> options) : base(options)
         {
             //NOTE: Update Databse or Migrate new Scheme when extending DbContext  using System.Data.Entity;
             //Database.SetInitializer(new MigrateDatabaseToLatestVersion<SchoolDBContext, EF6Console.Migrations.Configuration>());
@@ -77,12 +73,21 @@ namespace TestAPI.ModelContexts
             //   .Property(b => b.UpatedAt)
             //.HasComputedColumnSql("datetime('now')");
 
-            modelBuilder.Entity<User>()
-                .Property(b => b.ImageId)
-                .HasDefaultValue(-1);
+            //NOTE: for adding default value
+            //modelBuilder.Entity<User>()
+            //    .Property(b => b.ImageFileId)
+            //    .HasDefaultValue(Guid.Empty);
 
-            modelBuilder.Entity<User>().Property(d => d.Id)
-                .ValueGeneratedOnAdd();
+            //NOTE: for AutoIncrement
+            //modelBuilder.Entity<User>().Property(d => d.Id)
+            //    .ValueGeneratedOnAdd();
+
+            // how to add relationship
+            //modelBuilder.Entity<User>()
+            //    .HasOne<ImageFile>(d => d.ImageFile)
+            //    .WithOne(imageFile => imageFile.User)
+            //    .HasForeignKey(nameof(User.ImageId))
+            //    .OnDelete(DeleteBehavior.Cascade);
 
             base.OnModelCreating(modelBuilder);
 

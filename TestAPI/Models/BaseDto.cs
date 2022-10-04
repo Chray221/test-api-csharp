@@ -3,8 +3,6 @@ namespace TestAPI.Models
 {
     public class BaseDto
     {
-        public BaseDto()
-        {
-        }
+        public Guid Id { get; set; }
     }
 }
