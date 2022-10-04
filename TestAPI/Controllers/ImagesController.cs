@@ -20,7 +20,7 @@ namespace TestAPI.Controllers
     public class ImagesController : MyControllerBase
     {
 
-        public ImagesController(TestContext context, IWebHostEnvironment environment):base(context, environment)
+        public ImagesController(TestDbContext context, IWebHostEnvironment environment):base(context, environment)
         {            
         }
 

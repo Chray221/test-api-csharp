@@ -23,14 +23,14 @@ using TestAPI.Services.Contracts;
 namespace TestAPI.Controllers
 {
     [ApiController]
-    [ApiVersion("1.0")]
-    [Route("v{version:apiversion}/api/[controller]")]
-    public class AuthenticationController : MyControllerBase
+    [ApiVersion("1.1")]
+    [Route("v{version:apiversion}/api/Authentication")]
+    public class AuthenticationControllerV2 : MyControllerBase
     {
         private IUserRepository _userRepository;
         private IImageFileRepository _imageFileRepository;
 
-        public AuthenticationController(
+        public AuthenticationControllerV2(
             TestDbContext context,
             IWebHostEnvironment environment,
             IUserRepository userRepository,
@@ -41,57 +41,10 @@ namespace TestAPI.Controllers
             _imageFileRepository = imageFileRepository;
         }
 
-        // GET: api/values
-        [HttpGet]
-        public IEnumerable<string> Get()
-        {
-            return new string[] { "value1", "value2" };
-        }
-
-        // POST api/authentication/sign_in
-        [HttpPost("sign_in")]
-        public async Task<object> SignIn(User user)
-        {
-            try
-            {
-                if (user != null)
-                {
-                    if (string.IsNullOrEmpty(user.Username))
-                    {
-                        return MessageExtension.ShowRequiredMessage("Username");
-                    }
-                    if (string.IsNullOrEmpty(user.Password))
-                    {
-                        return MessageExtension.ShowRequiredMessage("Password");
-                    }
-                    Logger.Log($"QUERY");
-                    User userFound = await _userRepository.GetAsync(user.Username);
-                    if (userFound != null)
-                    {
-                        if (SaltHasher.VerifyHash(user.Password, userFound.Password))
-                        {
-                            testContext.Entry(userFound).Reference(u => u.ImageFile).Load(); // retreived data from reference entity (ImageFile Property from ImageID)
-                            return new { user = userFound.UserFormat(Request.Host.Value), status = HttpStatusCode.OK };
-                        }
-                        return MessageExtension.ShowCustomMessage("Sign In Error", "Username or password mismatched", "Sign Up");
-                    }
-                    else
-                    {
-                        return MessageExtension.ShowCustomMessage("Sign In Error", "User is not registered", "Sign Up");
-                    }
-                }
-
-                return NotFound();
-            }
-            catch(Exception ex)
-            {
-                return NotFound();
-            }
-        }
         // POST api/authentication/sign_in
         [HttpPost("sign_in")]
         [ApiVersion("1.1")]
-        public async Task<object> SignInV2([FromBody]User user)
+        public async Task<object> SignInV2([FromBody] SignInUserDto user)
         {
             try
             {
@@ -112,13 +65,13 @@ namespace TestAPI.Controllers
                         if (SaltHasher.VerifyHash(user.Password, userFound.Password))
                         {
                             testContext.Entry(userFound).Reference(u => u.ImageFile).Load(); // retreived data from reference entity (ImageFile Property from ImageID)
-                            return new { user = userFound.UserFormat(Request.Host.Value), status = HttpStatusCode.OK };
+                            return Ok( new { user = new UserDto(userFound), status = HttpStatusCode.OK });
                         }
-                        return MessageExtension.ShowCustomMessage("Sign In Error", "Username or password mismatched", "Sign Up");
+                        return Ok(MessageExtension.ShowCustomMessage("Sign In Error", "Username or password mismatched", "Sign Up"));
                     }
                     else
                     {
-                        return MessageExtension.ShowCustomMessage("Sign In Error", "User is not registered", "Sign Up");
+                        return Ok(MessageExtension.ShowCustomMessage("Sign In Error", "User is not registered", "Sign Up"));
                     }
                 }
 
@@ -132,143 +85,27 @@ namespace TestAPI.Controllers
 
         // POST api/authentication/sign_in
         [HttpPut("sign_up")]
-        public async Task<object> SignUp()
-        {
-            User userFound = null;
-            Logger.Log($"HOST: {Request.Host.Value} | HOST = {Request.Host.Host} | PORT = {Request.Host.Port}");
-            if (Request.HasFormContentType && Request.Form != null)
-            {
-                if ( !Request.Form.ContainsKey("username") && string.IsNullOrEmpty(Request.Form["username"].First()) )
-                {
-                    return MessageExtension.ShowRequiredMessage("Username");
-                }
-
-                if (!Request.Form.ContainsKey("first_name") && string.IsNullOrEmpty(Request.Form["first_name"].First()))
-                {
-                    return MessageExtension.ShowRequiredMessage("Firstname");
-                }
-
-                if (!Request.Form.ContainsKey("last_name") && string.IsNullOrEmpty(Request.Form["last_name"].First()))
-                {
-                    return MessageExtension.ShowRequiredMessage("Lastname");
-                }
-
-                if (!Request.Form.ContainsKey("password") && string.IsNullOrEmpty(Request.Form["password"].First()))
-                {
-                    return MessageExtension.ShowRequiredMessage("Password");
-                }
-
-                Logger.Log($"QUERY");
-                userFound = await testContext.Users.FirstOrDefaultAsync((userObject) => userObject.Username.Equals(Request.Form["username"].First()));
-                if (userFound == null)
-                {
-                    User user = new User(Request.Form["username"].First(), Request.Form["first_name"].First(), Request.Form["last_name"].First(), SaltHasher.ComputeHash(Request.Form["password"].First()));
-                    IFormFile imageFile = null;
-                    if (Request.Form.Files["image"] is IFormFile imageFormFile)
-                    {
-                        imageFile = imageFormFile;
-                        string imageName = imageFile.FileName;
-
-                        EntityEntry<ImageFile> userImage = await testContext.Images.AddAsync(new ImageFile($"{Guid.NewGuid()}{Path.GetExtension(imageName)}"));
-                        await testContext.SaveChangesAsync();
-                        user.ImageId = userImage.Entity.Id;
-                    }
-                    EntityEntry<User> userAdded = await testContext.Users.AddAsync(user);
-                    var savedChanges = await testContext.SaveChangesAsync();
-                    if (imageFile != null)
-                    {
-                        var image = userAdded.Entity.ImageFile;
-                        image.Update(userAdded.Entity.Id);
-                        ImageHelper.SaveThumbImage(imageFile, image.ThumbUrl);
-                        await ImageHelper.SaveImage(imageFile, image.Url);
-                        testContext.Images.Update(image);
-                        await testContext.SaveChangesAsync();
-                    }
-                    return new { user = userAdded.Entity.UserFormat(Request.Host.Value), status = HttpStatusCode.OK };
-                }
-                else
-                {
-                    return MessageExtension.ShowCustomMessage("Sign Up Error", "Username is already taken", "Okay");
-                }
-            }
-            else if ( !Request.HasFormContentType )
-            {
-                var user = await this.GetRequestRObject<User>();
-                if (!user.Username.IsValidString())
-                {
-                    return MessageExtension.ShowRequiredMessage("Username");
-                }
-
-                if (!user.FirstName.IsValidString())
-                {
-                    return MessageExtension.ShowRequiredMessage("Firstname");
-                }
-
-                if (!user.LastName.IsValidString())
-                {
-                    return MessageExtension.ShowRequiredMessage("Lastname");
-                }
-
-                if (!user.Password.IsValidString())
-                {
-                    return MessageExtension.ShowRequiredMessage("Password");
-                }
-                userFound = await testContext.Users.FirstOrDefaultAsync((userObject) => userObject.Username.Equals(user.Username.First()));
-                if (userFound == null)
-                {
-                    user.Password = SaltHasher.ComputeHash(user.Password);
-                    var userAdded = await testContext.Users.AddAsync(user);
-                    await testContext.SaveChangesAsync();
-                    return new { user = userAdded.Entity.UserFormat(), status = 200 };
-                }
-                else
-                {
-                    return MessageExtension.ShowCustomMessage("Sign Up Error", "Username is already taken", "Okay");
-                }
-            }
-
-            return NotFound();
-        }
-
-        // POST api/authentication/sign_in
-        [HttpPut("sign_up")]
         [ApiVersion("1.1")]
         public async Task<object> SignUpV2([FromBody]SignUpUserDto user)
         {
-            User userFound = null;
             Logger.Log($"HOST: {Request.Host.Value} | HOST = {Request.Host.Host} | PORT = {Request.Host.Port}");
             if(user != null)
             {
-                if ( string.IsNullOrEmpty(user.Username))
+                object required = user.VerifyRequired();
+                if (required != null)
                 {
-                    return MessageExtension.ShowRequiredMessage("Username");
-                }
-
-                if ( string.IsNullOrEmpty(user.FirstName))
-                {
-                    return MessageExtension.ShowRequiredMessage("Firstname");
-                }
-
-                if (string.IsNullOrEmpty(user.LastName))
-                {
-                    return MessageExtension.ShowRequiredMessage("Lastname");
-                }
-
-                if (string.IsNullOrEmpty(user.Password))
-                {
-                    return MessageExtension.ShowRequiredMessage("Password");
+                    return BadRequest(required);
                 }
 
                 Logger.Log($"QUERY");
                 if (await _userRepository.GetAsync(user.Username) == null)
                 {
-                    User newUser = new User(user.Username, user.FirstName, user.LastName, SaltHasher.ComputeHash(Request.Form["password"].First()));
-                    IFormFile imageFile = null;
+                    User newUser = new User(user.Username, user.FirstName, user.LastName, SaltHasher.ComputeHash(user.Password));
                     if (Request.HasFormContentType &&
                         Request.Form != null &&
                         Request.Form.Files["image"] is IFormFile imageFormFile)
                     {
-                        imageFile = imageFormFile;
+                        IFormFile imageFile = imageFormFile;
                         string imageName = imageFile.FileName;
                         ImageFile newImage = new ImageFile($"{Guid.NewGuid()}{Path.GetExtension(imageName)}");
                         if (await _imageFileRepository.InsertAsync(newImage) &&
@@ -277,64 +114,28 @@ namespace TestAPI.Controllers
                             ImageHelper.SaveThumbImage(imageFile, newImage.ThumbUrl);
                             await ImageHelper.SaveImage(imageFile, newImage.Url);
                             await _imageFileRepository.InsertAsync(newImage);
-                            newUser.ImageId = newImage.Id;
+                            newUser.ImageFileId = newImage.Id;
                             newUser.ImageFile = newImage;
                         }
+                    }
 
-                        await _userRepository.InsertAsync(newUser);
+                    if (await _userRepository.InsertAsync(newUser))
+                    {
+                        return Ok(new UserDto(newUser));
+                    }
+                    else                        
+                    {
+                        return StatusCode((int)HttpStatusCode.InternalServerError);
                     }
                 }
                 else
                 {
-                    MessageExtension.ShowCustomMessage("Sing Up Error!", "User already exists", statusCode: HttpStatusCode.BadRequest);
+                    return Ok(MessageExtension.ShowCustomMessage("Sing Up Error!", "User already exists", statusCode: HttpStatusCode.BadRequest));
                 }
             }
 
             return BadRequest();
         }
 
-        // POST api/authentication/sign_in
-        //[HttpPut("sign_up")]
-        //public async Task<object> SignUp(User user)
-        //{
-        //    if (user != null)
-        //    {
-        //        if (string.IsNullOrEmpty(user.Username) )
-        //        {
-        //            return MessageExtension.ShowRequiredMessage("Username");
-        //        }
-
-        //        if (string.IsNullOrEmpty(user.FirstName))
-        //        {
-        //            return MessageExtension.ShowRequiredMessage("Firstname");
-        //        }
-
-        //        if (string.IsNullOrEmpty(user.LastName))
-        //        {
-        //            return MessageExtension.ShowRequiredMessage("Lastname");
-        //        }
-
-        //        if (string.IsNullOrEmpty(user.Password))
-        //        {
-        //            return MessageExtension.ShowRequiredMessage("Password");
-        //        }
-        //        Logger.Log($"QUERY");
-        //        User userFound = await testDB.Users.FirstOrDefaultAsync((userObject) => userObject.Username.Equals(user.Username));
-        //        if (userFound == null)
-        //        {
-        //            user.Password = SaltHasher.ComputeHash(user.Password);
-        //            var userAdded = await testDB.Users.AddAsync(user);
-        //            await testDB.SaveChangesAsync();
-        //            return new { user = userAdded.Entity.UserFormat(), status = 200 };
-        //        }
-        //        else
-        //        {
-        //            return MessageExtension.ShowCustomMessage("Sign Up Error", "Username is already taken", "Okay");
-        //        }
-
-        //    }
-
-        //    return NotFound();
-        //}
     }
 }
