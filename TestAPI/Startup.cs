@@ -10,17 +10,29 @@ using Microsoft.AspNetCore.Mvc;
 using TestAPI.Models;
 using Microsoft.AspNetCore.Identity;
 using System.Linq;
+using System;
+using TestAPI.Services.Contracts;
+using TestAPI.Services.Concretes;
 
 namespace TestAPI
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
+        private string _envName = string.Empty;
 
         public IConfiguration Configuration { get; }
+
+        public Startup(IConfiguration configuration, IWebHostEnvironment env)
+        {
+            _envName = env.EnvironmentName;
+
+            IConfigurationBuilder builder = new ConfigurationBuilder()
+                .SetBasePath(AppContext.BaseDirectory)
+                .AddJsonFile("appsettings.json", false, true)
+                .AddJsonFile($"appsettings.{_envName}.json",optional: true, reloadOnChange: true)
+                .AddEnvironmentVariables();
+            Configuration = builder.Build();
+        }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -54,11 +66,11 @@ namespace TestAPI
             //services.AddDbContext<TestContext>();
 
             
-            services.AddDbContext<TestContext>(options =>
+            services.AddDbContext<TestDbContext>(options =>
             {
                 #region from string connection
                 //NOTE: Using in memory only 
-                options.UseInMemoryDatabase("UserList");
+                //options.UseInMemoryDatabase("UserList");
 
                 //NOTE: using sqlite database the same as when sql addition is in the CONTEXT
                 //options.UseSqlite("Filename=./test_context.db");
@@ -103,18 +115,18 @@ namespace TestAPI
             //    .AddIdentity<User, IdentityRole<long>>()
             //    .AddDefaultTokenProviders();
 
-            services
-                .AddControllers()
-                .AddNewtonsoftJson(options =>
-                   options.SerializerSettings.ContractResolver =
-                        new DefaultContractResolver() { NamingStrategy = new SnakeCaseNamingStrategy() });
+            //services
+            //    .AddControllers()
+            //    .AddNewtonsoftJson(options =>
+            //       options.SerializerSettings.ContractResolver =
+            //            new DefaultContractResolver() { NamingStrategy = new SnakeCaseNamingStrategy() });
 
             //NOTE: change Newtonsoft Naming Policy to Snake Casing
-            services
-                .AddMvc()
-                .AddNewtonsoftJson(options =>
-                   options.SerializerSettings.ContractResolver =
-                        new DefaultContractResolver() { NamingStrategy = new SnakeCaseNamingStrategy() });
+            //services
+            //    .AddMvc()
+            //    .AddNewtonsoftJson(options =>
+            //       options.SerializerSettings.ContractResolver =
+            //            new DefaultContractResolver() { NamingStrategy = new SnakeCaseNamingStrategy() });
 
             //NOTE: change System.Text.Json Naming Policy to Snake Casing
             //services.AddMvc()
@@ -122,6 +134,9 @@ namespace TestAPI
             //    options.JsonSerializerOptions.PropertyNamingPolicy =
             //        new SnakeCasePropertyNamingPolicy());
 
+
+            services.AddTransient<IUserRepository, UserRepository>();
+            services.AddTransient<IImageFileRepository, ImageFileRepository>();
         }
 
         //NOTE: This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -149,12 +164,14 @@ namespace TestAPI
                 {
                     c.SwaggerEndpoint("/swagger/v1.0/swagger.json", "Test Api");
                 });
+            
         }
 
-        public static void ConfigureWebApi(IApplicationBuilder applicationBuilder)
-        {
-            applicationBuilder.UseCors();
-            applicationBuilder.UseWebSockets();
-        }
+        //public static void ConfigureWebApi(IApplicationBuilder applicationBuilder)
+        //{
+        //    applicationBuilder.UseCors();
+        //    applicationBuilder.UseWebSockets();
+        //}
+
     }
 }

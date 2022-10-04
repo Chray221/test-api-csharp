@@ -10,7 +10,7 @@ namespace TestAPI
     public class Program
     {
         public static void Main(string[] args)
-        {          
+        {
             CreateHostBuilder(args).Build().Run();
         }
 
@@ -25,10 +25,11 @@ namespace TestAPI
                     //added logging configuration
                     webBuilder.ConfigureLogging( (hostingContext, logging) =>
                    {
-                       logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
-                       logging.AddDebug();
-                       logging.AddConsole();
-                       logging.AddEventSourceLogger();
+                       logging
+                            .AddConfiguration(hostingContext.Configuration.GetSection("Logging"))
+                            .AddDebug()
+                            .AddConsole()
+                            .AddEventSourceLogger();
                        //logging.AddEventLog();
                    });
                 });
