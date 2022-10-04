@@ -21,8 +21,9 @@ namespace TestAPI.Helpers
 {
     public static class ImageHelper
     {
+        public static string ImagePath = Path.Combine($"Uploads", "Images");
 
-        public static async Task<bool> SaveImage(IFormFile postedFile,string filePath, string user_id = "0")
+        public static async Task<bool> SaveImageAsync(IFormFile postedFile,string filePath)
         {
             ////Extract Image File Name.
             //string fileName = System.IO.Path.GetFileName(postedFile.FileName);
@@ -81,12 +82,24 @@ namespace TestAPI.Helpers
             }
         }
 
-        public static string GetUserImage(this MyControllerBase controller,string imagePathName)
+        public static Task<bool> SaveUserImageAsync(IFormFile postedFile, string imagePathName)
         {
-            return $"{controller.RootPath}/images/{imagePathName}";
+            string imagePath = Path.Combine( ImagePath, imagePathName);
+            return SaveImageAsync(postedFile, imagePath);
         }
 
-        public static bool IsUserImageExist(string imagePath)
+        public static byte[] GetUserImageAsync(string imagePathName)
+        {
+            string imagePath = Path.Combine(ImagePath, imagePathName);
+            return RetrieveImage(imagePath);
+        }
+
+        public static string GetUserImageString(this MyControllerBase controller,string imagePathName)
+        {
+            return Path.Combine(controller.RootPath, ImagePath, imagePathName);
+        }
+
+        public static bool IsImageExist(string imagePath)
         {
             return File.Exists(imagePath);
         }

@@ -18,14 +18,27 @@ namespace TestAPI.Services.Concretes
             _dbContext = dbContext;
         }
 
+        public override async Task<User> GetAsync(Guid id)
+        {
+            User userFound = await base.GetAsync(id);
+            // retreived data from reference entity (ImageFile Property from ImageFileId)
+            _dbContext.Entry(userFound).Reference(u => u.ImageFile).Load();
+            return userFound;
+        }
+
         public async Task<User> GetAsync(string username, string password)
         {
-            return await _dbContext.Users.FirstOrDefaultAsync(user => user.Username == username && user.Password == password);
+            User userFound = await _dbContext.Users.FirstOrDefaultAsync(user => user.Username == username && user.Password == password);
+            // retreived data from reference entity (ImageFile Property from ImageFileId)
+            _dbContext.Entry(userFound).Reference(u => u.ImageFile).Load();
+            return userFound;
         }
 
         public async Task<User> GetAsync(string username)
         {
-            return await _dbContext.Users.FirstOrDefaultAsync(user => user.Username == username);
+            User userFound = await _dbContext.Users.FirstOrDefaultAsync(user => user.Username == username);            // retreived data from reference entity (ImageFile Property from ImageFileId)
+            _dbContext.Entry(userFound).Reference(u => u.ImageFile).Load();
+            return userFound;
         }
     }
 }

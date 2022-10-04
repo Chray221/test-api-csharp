@@ -23,59 +23,56 @@ using TestAPI.Services.Contracts;
 namespace TestAPI.Controllers
 {
     [ApiController]
-    [ApiVersion("1.1")]
+    [ApiVersion("1.0")]
     [Route("v{version:apiversion}/api/Authentication")]
     public class AuthenticationControllerV2 : MyControllerBase
     {
         private IUserRepository _userRepository;
         private IImageFileRepository _imageFileRepository;
-
+        private TestDbContext _dbContext;
         public AuthenticationControllerV2(
-            TestDbContext context,
+            TestDbContext dbContext,
             IWebHostEnvironment environment,
             IUserRepository userRepository,
             IImageFileRepository imageFileRepository)
-            :base(context, environment)
+            :base(environment)
         {
+            _dbContext = dbContext;
             _userRepository = userRepository;
             _imageFileRepository = imageFileRepository;
         }
 
         // POST api/authentication/sign_in
         [HttpPost("sign_in")]
-        [ApiVersion("1.1")]
-        public async Task<object> SignInV2([FromBody] SignInUserDto user)
+        public async Task<ActionResult> SignInV2([FromBody] SignInUserRequestDto user)
         {
             try
             {
-                if (user != null)
+                if (ModelState.IsValid)
                 {
-                    if (string.IsNullOrEmpty(user.Username))
+                    if (user != null)
                     {
-                        return MessageExtension.ShowRequiredMessage("Username");
-                    }
-                    if (string.IsNullOrEmpty(user.Password))
-                    {
-                        return MessageExtension.ShowRequiredMessage("Password");
-                    }
-                    Logger.Log($"QUERY");
-                    User userFound = await testContext.Users.FirstOrDefaultAsync((userObject) => userObject.Username.Equals(user.Username));
-                    if (userFound != null)
-                    {
-                        if (SaltHasher.VerifyHash(user.Password, userFound.Password))
+                        User userFound = await _userRepository.GetAsync(user.Username);
+                        if (userFound != null)
                         {
-                            testContext.Entry(userFound).Reference(u => u.ImageFile).Load(); // retreived data from reference entity (ImageFile Property from ImageID)
-                            return Ok( new { user = new UserDto(userFound), status = HttpStatusCode.OK });
+                            if (SaltHasher.VerifyHash(user.Password, userFound.Password))
+                            {
+                                _dbContext.Entry(userFound).Reference(u => u.ImageFile).Load(); // retreived data from reference entity (ImageFile Property from ImageID)
+                                return Ok(new { user = new UserDto(userFound), status = HttpStatusCode.OK });
+                            }
+                            return BadRequest(MessageExtension.ShowCustomMessage("Sign In Error", "Username or password mismatched", "Sign Up", statusCode: HttpStatusCode.BadRequest));
                         }
-                        return Ok(MessageExtension.ShowCustomMessage("Sign In Error", "Username or password mismatched", "Sign Up"));
+                        else
+                        {
+                            return BadRequest(MessageExtension.ShowCustomMessage("Sign In Error", "User is not registered", "Sign Up", statusCode: HttpStatusCode.BadRequest));
+                        }
                     }
-                    else
-                    {
-                        return Ok(MessageExtension.ShowCustomMessage("Sign In Error", "User is not registered", "Sign Up"));
-                    }
+                    return NotFound();
                 }
-
-                return NotFound();
+                else
+                {
+                    return BadRequest(ModelState);
+                }
             }
             catch (Exception ex)
             {
@@ -85,56 +82,57 @@ namespace TestAPI.Controllers
 
         // POST api/authentication/sign_in
         [HttpPut("sign_up")]
-        [ApiVersion("1.1")]
-        public async Task<object> SignUpV2([FromBody]SignUpUserDto user)
+        public async Task<ActionResult> SignUpV2([FromBody]SignUpUserRequestDto user)
         {
-            Logger.Log($"HOST: {Request.Host.Value} | HOST = {Request.Host.Host} | PORT = {Request.Host.Port}");
-            if(user != null)
+            if (ModelState.IsValid)
             {
-                object required = user.VerifyRequired();
-                if (required != null)
+                Logger.Log($"HOST: {Request.Host.Value} | HOST = {Request.Host.Host} | PORT = {Request.Host.Port}");
+                if (user != null)
                 {
-                    return BadRequest(required);
-                }
-
-                Logger.Log($"QUERY");
-                if (await _userRepository.GetAsync(user.Username) == null)
-                {
-                    User newUser = new User(user.Username, user.FirstName, user.LastName, SaltHasher.ComputeHash(user.Password));
-                    if (Request.HasFormContentType &&
-                        Request.Form != null &&
-                        Request.Form.Files["image"] is IFormFile imageFormFile)
+                    if (await _userRepository.GetAsync(user.Username) == null)
                     {
-                        IFormFile imageFile = imageFormFile;
-                        string imageName = imageFile.FileName;
-                        ImageFile newImage = new ImageFile($"{Guid.NewGuid()}{Path.GetExtension(imageName)}");
-                        if (await _imageFileRepository.InsertAsync(newImage) &&
-                            imageFile != null)
+                        User newUser = new User(user.Username, user.FirstName, user.LastName, SaltHasher.ComputeHash(user.Password));
+                        if (Request.HasFormContentType &&
+                            Request?.Form?.Files["image"] is IFormFile imageFormFile)
                         {
-                            ImageHelper.SaveThumbImage(imageFile, newImage.ThumbUrl);
-                            await ImageHelper.SaveImage(imageFile, newImage.Url);
-                            await _imageFileRepository.InsertAsync(newImage);
-                            newUser.ImageFileId = newImage.Id;
-                            newUser.ImageFile = newImage;
+                            IFormFile imageFile = imageFormFile;
+                            //string imageName = imageFile.FileName;
+                            //ImageFile newImage = new ImageFile($"{Guid.NewGuid()}{Path.GetExtension(imageName)}");
+                            ImageFile newImage = new ImageFile(newUser.Id);
+                            if (imageFile != null &&
+                                 await _imageFileRepository.InsertAsync(newImage))
+                            {
+                                ImageHelper.SaveThumbImage(imageFile, newImage.ThumbUrl);
+                                await ImageHelper.SaveImageAsync(imageFile, newImage.Url);
+                                if (await _imageFileRepository.InsertAsync(newImage))
+                                {
+                                    newUser.ImageFileId = newImage.Id;
+                                    newUser.ImageFile = newImage;
+                                }
+                            }
+                        }
+
+                        if (await _userRepository.InsertAsync(newUser))
+                        {
+                            return Ok(new UserDto(newUser));
+                        }
+                        else
+                        {
+                            return StatusCode((int)HttpStatusCode.InternalServerError);
                         }
                     }
+                    else
+                    {
+                        return Ok(MessageExtension.ShowCustomMessage("Sing Up Error!", "User already exists", statusCode: HttpStatusCode.BadRequest));
+                    }
+                }
 
-                    if (await _userRepository.InsertAsync(newUser))
-                    {
-                        return Ok(new UserDto(newUser));
-                    }
-                    else                        
-                    {
-                        return StatusCode((int)HttpStatusCode.InternalServerError);
-                    }
-                }
-                else
-                {
-                    return Ok(MessageExtension.ShowCustomMessage("Sing Up Error!", "User already exists", statusCode: HttpStatusCode.BadRequest));
-                }
+                return BadRequest();
             }
-
-            return BadRequest();
+            else
+            {
+                return BadRequest(ModelState);
+            }
         }
 
     }

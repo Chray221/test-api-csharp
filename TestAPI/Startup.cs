@@ -43,8 +43,20 @@ namespace TestAPI
                 {
                     options.EnableEndpointRouting = false;
                 })
+            //NOTE: change Newtonsoft Naming Policy to Snake Casing
+                .AddNewtonsoftJson(options =>
+                   options.SerializerSettings.ContractResolver =
+                        new DefaultContractResolver() { NamingStrategy = new SnakeCaseNamingStrategy() })
+            //NOTE: change System.Text.Json Naming Policy to Snake Casing
+            //    .AddJsonOptions(options =>
+            //       options.JsonSerializerOptions.PropertyNamingPolicy =
+            //            new SnakeCasePropertyNamingPolicy())
                 .SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
+
             services.AddControllers();
+
+            
+
 
             // NOTE: add default versioning
             services.AddApiVersioning(cfg =>
@@ -60,6 +72,9 @@ namespace TestAPI
                     c.SwaggerDoc("v1.0", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "TestC# API", Version = "v1.0" });
                     c.ResolveConflictingActions(apidescription => apidescription.First());
                 })
+            //NOTE: added Newtonsoft for Swagger
+                .AddSwaggerGenNewtonsoftSupport()
+
                 .AddLogging();
 
             //NOTE: using sql or sqlite database when sql addition is in the CONTEXT
@@ -83,6 +98,8 @@ namespace TestAPI
                 #endregion
 
                 #region From appsetting.json
+
+                #region NOTE: using sqlite database the same as when sql addition is in the CONTEXT using appsettings
                 /* NOTE: using sqlite database the same as when sql addition is in the CONTEXT using appsettings
                  * NOTE: add testdb_source.db in the project
                  * NOTE: then add in appsettings.json or appsettings.Development.json
@@ -94,7 +111,9 @@ namespace TestAPI
                  * }
                  */
                 options.UseSqlite(Configuration.GetConnectionString("MySQLiteSourceConnection"));
+                #endregion
 
+                #region NOTE: FOR SQL using appsettings
                 /* NOTE: FOR SQL using appsettings
                  * NOTE: then add in appsettings.json or appsettings.Development.json
                  * =======================
@@ -105,9 +124,11 @@ namespace TestAPI
                  * }
                  */
                 //options.UseSqlServer(Configuration.GetConnectionString("MyPostgresqlConnTemp1"));
+                #endregion
 
                 // using Postgresql database
                 //options.UseNpgsql(Configuration.GetConnectionString("MyPostgresqlConn"));
+
                 #endregion
             });
 
@@ -115,26 +136,7 @@ namespace TestAPI
             //    .AddIdentity<User, IdentityRole<long>>()
             //    .AddDefaultTokenProviders();
 
-            //services
-            //    .AddControllers()
-            //    .AddNewtonsoftJson(options =>
-            //       options.SerializerSettings.ContractResolver =
-            //            new DefaultContractResolver() { NamingStrategy = new SnakeCaseNamingStrategy() });
-
-            //NOTE: change Newtonsoft Naming Policy to Snake Casing
-            //services
-            //    .AddMvc()
-            //    .AddNewtonsoftJson(options =>
-            //       options.SerializerSettings.ContractResolver =
-            //            new DefaultContractResolver() { NamingStrategy = new SnakeCaseNamingStrategy() });
-
-            //NOTE: change System.Text.Json Naming Policy to Snake Casing
-            //services.AddMvc()
-            //    .AddJsonOptions(options =>
-            //    options.JsonSerializerOptions.PropertyNamingPolicy =
-            //        new SnakeCasePropertyNamingPolicy());
-
-
+            // adding services
             services.AddTransient<IUserRepository, UserRepository>();
             services.AddTransient<IImageFileRepository, ImageFileRepository>();
         }
@@ -164,6 +166,12 @@ namespace TestAPI
                 {
                     c.SwaggerEndpoint("/swagger/v1.0/swagger.json", "Test Api");
                 });
+
+            app.UseMvc(routes =>
+            {
+                //default
+                routes.MapRoute("default", "{version:apiversion}/api/{controller=Home}/{action=Index}/{id?}");
+            });
             
         }
 

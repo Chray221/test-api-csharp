@@ -16,11 +16,12 @@ using TestAPI.Models;
 
 namespace TestAPI.Controllers
 {
+    [ApiController]
     [Route("[controller]")]
     public class ImagesController : MyControllerBase
     {
 
-        public ImagesController(TestDbContext context, IWebHostEnvironment environment):base(context, environment)
+        public ImagesController(IWebHostEnvironment environment):base(environment)
         {            
         }
 
@@ -28,20 +29,20 @@ namespace TestAPI.Controllers
         [HttpGet("{imageName}")]
         public object GetImage(string imageName)
         {
-            string filePath = this.GetUserImage($"{imageName}");
-            if (!ImageHelper.IsUserImageExist(filePath))
+            string filePath = this.GetUserImageString($"{imageName}");
+            if (!ImageHelper.IsImageExist(filePath))
             {
                 return NotFound();
             }
             return PhysicalFile(filePath, $"image/{Path.GetExtension(imageName).Replace(".","")}",true);
         }
-        
-        // GET images/image.jpg
+
+        // GET images/0A674720-E802-42C1-B28C-53403E0F8800/0A674720-E802-42C1-B28C-53403E0F8800
         [HttpGet("{user_id}/{imageName}")]
         public object GetImage(string user_id, string imageName)
         {
-            string filePath = this.GetUserImage($"{user_id}/{imageName}");
-            if (!ImageHelper.IsUserImageExist(filePath))
+            string filePath = this.GetUserImageString($"{user_id}/{imageName}");
+            if (!ImageHelper.IsImageExist(filePath))
             {
                 return NotFound();
             }
@@ -53,20 +54,20 @@ namespace TestAPI.Controllers
         public object GetLogo()
         {
             string imageName = "Logo.png";
-            string filePath = this.GetUserImage($"{imageName}");
-            if (!ImageHelper.IsUserImageExist(filePath))
+            string filePath = this.GetUserImageString($"{imageName}");
+            if (!ImageHelper.IsImageExist(filePath))
             {
                 return NotFound();
             }
-            return PhysicalFile(filePath, $"image/{Path.GetExtension(imageName).Replace(".", "")}", true);
+            return PhysicalFile(filePath, "image", Path.GetExtension(imageName).Replace(".", ""), true);
         }
 
-        // GET images/image.jpg
+        // GET images/image.jpg/download
         [HttpGet("{user_id}/{imageName}/download")]
         public object DownloaImage(string user_id, string imageName)
         {
-            string filePath = this.GetUserImage($"{user_id}/{imageName}");
-            if (!ImageHelper.IsUserImageExist(filePath))
+            string filePath = this.GetUserImageString($"{user_id}/{imageName}");
+            if (!ImageHelper.IsImageExist(filePath))
             {
                 return NotFound();
             }

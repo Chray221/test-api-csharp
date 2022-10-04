@@ -10,6 +10,7 @@ namespace TestAPI.Data
         public string Url { get; set; }
         public string ThumbUrl { get; set; }
         public Guid UserId { get; set; }
+
         [ForeignKey(nameof(UserId))]
         public User User { get; set; }
 
@@ -17,18 +18,32 @@ namespace TestAPI.Data
         {
 
         }
+
         public ImageFile(string ImageName) : base()
         {
             Id = Guid.NewGuid();
-            Url = Path.Combine($"images", $"{ImageName}");
-            ThumbUrl = Path.Combine($"images", $"thumb_{ImageName}");
+            Url = Path.Combine(ImageHelper.ImagePath, $"{ImageName}");
+            ThumbUrl = Path.Combine(ImageHelper.ImagePath, $"thumb_{ImageName}");
         }
 
-        public void Update(Guid UsedId)
+        public ImageFile(Guid UserId) : base()
         {
-            ImageHelper.CreateFolder($"images/{UsedId}");
-            Url = Url.Replace("images",$"images/{UsedId}");
-            ThumbUrl = ThumbUrl.Replace("images", $"images/{UsedId}");
+            Id = Guid.NewGuid();
+            string imagePath = Path.Combine(ImageHelper.ImagePath, $"{UserId}");
+            ImageHelper.CreateFolder(imagePath);
+            Url = Path.Combine(imagePath, $"{Id}");
+            ThumbUrl = Path.Combine(imagePath, $"{Id}_thumb");
+        }
+
+        public void Update(Guid UserId)
+        {
+            this.UserId = UserId;
+            string imagePath = Path.Combine(ImageHelper.ImagePath, $"{UserId}");
+            ImageHelper.CreateFolder(imagePath);
+            Url = Path.Combine(imagePath,$"{Id}");
+            ThumbUrl = Path.Combine(imagePath, $"{Id}_thumb");
+            //Url = Url.Replace("images",$"images/{UserId}");
+            //ThumbUrl = ThumbUrl.Replace("images", $"images/{UserId}");
         }
     }
 }

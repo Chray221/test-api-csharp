@@ -17,7 +17,7 @@ namespace TestAPI.Services.Concretes
             _dbContext = dbContext;
         }
 
-        public async Task<bool> DeleteAsync(Guid id)
+        virtual public async Task<bool> DeleteAsync(Guid id)
         {
             T deletedUser = await _dbContext.FindAsync<T>(id);
             if (deletedUser != null)
@@ -29,12 +29,12 @@ namespace TestAPI.Services.Concretes
             return deletedUser != null;
         }
 
-        public async Task<T> GetAsync(Guid id)
+        virtual public async Task<T> GetAsync(Guid id)
         {
             return await _dbContext.FindAsync<T>(id);
         }
 
-        public async Task<bool> InsertAsync(T data)
+        virtual public async Task<bool> InsertAsync(T data)
         {
             try
             {
@@ -56,7 +56,7 @@ namespace TestAPI.Services.Concretes
             return false;
         }
 
-        public async Task<bool> UpdateAsync(T data)
+        virtual public async Task<bool> UpdateAsync(T data)
         {
             try
             {
