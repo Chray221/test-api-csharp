@@ -9,11 +9,11 @@ namespace TestAPI.Controllers
     public class MyControllerBase : ControllerBase
     {
         // initializing DB connected by Context
-        public TestContext testContext;
+        public TestDbContext testContext;
 
         public string RootPath { get { return Host.HostEnvironment.WebRootPath ?? Host.HostEnvironment.ContentRootPath; } }
 
-        public MyControllerBase(TestContext context, IWebHostEnvironment environment)
+        public MyControllerBase(TestDbContext context, IWebHostEnvironment environment)
         {
             Host.HostEnvironment = environment ?? throw new ArgumentNullException(nameof(environment));
             testContext = context;

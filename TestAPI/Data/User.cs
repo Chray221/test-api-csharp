@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore.Update.Internal;
 using Newtonsoft.Json;
 
-namespace TestAPI.Models
+namespace TestAPI.Data
 {
     public class User : BaseModel
     {
@@ -19,12 +19,12 @@ namespace TestAPI.Models
         [Required]
         public string Password { get; set; }
         [AllowNull]
-        public int ImageId { get; set; }
-        [ForeignKey("ImageId")]
+        public Guid? ImageFileId { get; set; }
+        [ForeignKey("ImageFileId")]
         public virtual ImageFile ImageFile { get; set; }
         //public string Image { get; set; }
         [NotMapped]
-        public string Image { get { return ImageFile != null ? ImageFile.ThumbUrl : null; } }
+        public string Image { get { return ImageFile?.ThumbUrl; } }
         //public bool IsVerified { get; set; }
 
         public User() : base()
