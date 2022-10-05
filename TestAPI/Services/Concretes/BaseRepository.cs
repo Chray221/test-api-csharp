@@ -19,6 +19,11 @@ namespace TestAPI.Services.Concretes
 
         virtual public async Task<bool> DeleteAsync(Guid id)
         {
+            if (id == Guid.Empty)
+            {
+                throw new NullReferenceException($"Parammeter \"{typeof(T).Name}Id\" is empty in DeleteAsync");
+            }
+
             T deletedUser = await _dbContext.FindAsync<T>(id);
             if (deletedUser != null)
             {
@@ -27,52 +32,56 @@ namespace TestAPI.Services.Concretes
                 _dbContext.Update(deletedUser);
             }
             return deletedUser != null;
+            
         }
 
         virtual public async Task<T> GetAsync(Guid id)
         {
+            if (id == Guid.Empty)
+            {
+                throw new NullReferenceException($"Parammeter \"{typeof(T).Name}Id\" is empty in GetAsync");
+            }
             return await _dbContext.FindAsync<T>(id);
         }
 
         virtual public async Task<bool> InsertAsync(T data)
         {
-            try
+            if (data == null)
             {
-                if (data != null)
+                throw new NullReferenceException($"Parammeter \"{typeof(T).Name}data\" is null in InsertAsync");
+            }
+
+            if (data != null)
+            {
+                if(data.Id == Guid.Empty)
                 {
-                    if(data.Id == Guid.Empty)
-                    {
-                        data.Id = Guid.NewGuid();
-                    }
-                    data.CreatedAt = DateTime.Now;
-                    await _dbContext.AddAsync(data);
-                    await _dbContext.SaveChangesAsync();
-                    return true;
+                    data.Id = Guid.NewGuid();
                 }
-            }
-            catch(Exception ex)
-            {
-            }
+                data.CreatedAt = DateTime.Now;
+                await _dbContext.AddAsync(data);
+                await _dbContext.SaveChangesAsync();
+                return true;
+            }            
             return false;
         }
 
         virtual public async Task<bool> UpdateAsync(T data)
         {
-            try
+            if (data == null)
             {
-                if (data != null)
-                {
-                    data.IsDeleted = true;
-                    data.UpdatedAt = DateTime.Now;
-                }
+                throw new NullReferenceException($"Parammeter \"{typeof(T).Name}data is null in UpdateAsync");
+            }
+
+            if (data != null)
+            {
+                data.IsDeleted = true;
+                data.UpdatedAt = DateTime.Now;
                 _dbContext.Update(data);
                 await _dbContext.SaveChangesAsync();
                 return true;
             }
-            catch (Exception ex)
-            {
-                return false;
-            }
+            return false;
+
         }
     }
 }

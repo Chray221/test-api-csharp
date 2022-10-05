@@ -18,18 +18,18 @@ namespace TestAPI.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class ImagesController : MyControllerBase
+    public class ImageController : MyControllerBase
     {
 
-        public ImagesController(IWebHostEnvironment environment):base(environment)
+        public ImageController(IWebHostEnvironment environment):base(environment)
         {            
         }
 
         // GET images/image.jpg
         [HttpGet("{imageName}")]
-        public object GetImage(string imageName)
+        public ActionResult GetImage(string imageName)
         {
-            string filePath = this.GetUserImageString($"{imageName}");
+            string filePath = this.GetImageString($"{imageName}");
             if (!ImageHelper.IsImageExist(filePath))
             {
                 return NotFound();
@@ -49,29 +49,29 @@ namespace TestAPI.Controllers
             return PhysicalFile(filePath, $"image/{Path.GetExtension(imageName).Replace(".", "")}", true);
         }
 
-        // GET images
+        //image
         [HttpGet]
-        public object GetLogo()
+        public ActionResult GetLogo()
         {
             string imageName = "Logo.png";
-            string filePath = this.GetUserImageString($"{imageName}");
+            string filePath = this.GetImageString($"{imageName}");
             if (!ImageHelper.IsImageExist(filePath))
             {
                 return NotFound();
             }
-            return PhysicalFile(filePath, "image", Path.GetExtension(imageName).Replace(".", ""), true);
+            return PhysicalFile(filePath, $"image/${Path.GetExtension(imageName).Replace(".", "")}", true);
         }
 
         // GET images/image.jpg/download
         [HttpGet("{user_id}/{imageName}/download")]
-        public object DownloaImage(string user_id, string imageName)
+        public ActionResult DownloaImage(string user_id, string imageName)
         {
             string filePath = this.GetUserImageString($"{user_id}/{imageName}");
             if (!ImageHelper.IsImageExist(filePath))
             {
                 return NotFound();
             }
-            return PhysicalFile(filePath, $"image/{Path.GetExtension(imageName)}", true);
+            return PhysicalFile(filePath, $"image/{Path.GetExtension(imageName)}", imageName, true);
         }
 
         public override NotFoundResult NotFound()
@@ -79,5 +79,7 @@ namespace TestAPI.Controllers
             Logger.Log("NOT FOUND RESULT");
             return base.NotFound();
         }
+
+        // save user path /Images/{UserId}/{ImageId}
     }
 }

@@ -9,9 +9,9 @@ namespace TestAPI.Models
         public string Username { get; set; }
 
         public UserDto(){}
-        public UserDto(User user) :base(user)
+        public UserDto(User user, string rootUrl = "") : base(user,rootUrl)
         {
-            Id = user.Id;
+            Username = user.Username;
         }
     }
 }

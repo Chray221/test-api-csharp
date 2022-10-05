@@ -24,13 +24,13 @@ namespace TestAPI.Controllers
 {
     [ApiController]
     [ApiVersion("1.0")]
-    [Route("v{version:apiversion}/api/Authentication")]
-    public class AuthenticationControllerV2 : MyControllerBase
+    [Route("v{version:apiversion}/api/[controller]")]
+    public partial class AuthenticationController : MyControllerBase
     {
         private IUserRepository _userRepository;
         private IImageFileRepository _imageFileRepository;
         private TestDbContext _dbContext;
-        public AuthenticationControllerV2(
+        public AuthenticationController(
             TestDbContext dbContext,
             IWebHostEnvironment environment,
             IUserRepository userRepository,
@@ -44,7 +44,7 @@ namespace TestAPI.Controllers
 
         // POST api/authentication/sign_in
         [HttpPost("sign_in")]
-        public async Task<ActionResult> SignInV2([FromBody] SignInUserRequestDto user)
+        public async Task<ActionResult> SignIn([FromBody] SignInUserRequestDto user)
         {
             try
             {
@@ -58,7 +58,7 @@ namespace TestAPI.Controllers
                             if (SaltHasher.VerifyHash(user.Password, userFound.Password))
                             {
                                 _dbContext.Entry(userFound).Reference(u => u.ImageFile).Load(); // retreived data from reference entity (ImageFile Property from ImageID)
-                                return Ok(new { user = new UserDto(userFound), status = HttpStatusCode.OK });
+                                return Ok(new { user = new UserDto(userFound, RootPath), status = HttpStatusCode.OK });
                             }
                             return BadRequest(MessageExtension.ShowCustomMessage("Sign In Error", "Username or password mismatched", "Sign Up", statusCode: HttpStatusCode.BadRequest));
                         }
@@ -80,9 +80,10 @@ namespace TestAPI.Controllers
             }
         }
 
-        // POST api/authentication/sign_in
+        //POST api/authentication/sign_up
         [HttpPut("sign_up")]
-        public async Task<ActionResult> SignUpV2([FromBody]SignUpUserRequestDto user)
+        [Consumes("application/json")]
+        public async Task<ActionResult> SignUp([FromBody]SignUpUserRequestDto user)
         {
             if (ModelState.IsValid)
             {
@@ -92,19 +93,49 @@ namespace TestAPI.Controllers
                     if (await _userRepository.GetAsync(user.Username) == null)
                     {
                         User newUser = new User(user.Username, user.FirstName, user.LastName, SaltHasher.ComputeHash(user.Password));
-                        if (Request.HasFormContentType &&
-                            Request?.Form?.Files["image"] is IFormFile imageFormFile)
+                        if (await _userRepository.InsertAsync(newUser))
                         {
-                            IFormFile imageFile = imageFormFile;
-                            //string imageName = imageFile.FileName;
-                            //ImageFile newImage = new ImageFile($"{Guid.NewGuid()}{Path.GetExtension(imageName)}");
-                            ImageFile newImage = new ImageFile(newUser.Id);
+                            return Ok(new UserDto(newUser, RootPath));
+                        }
+                        else
+                        {
+                            return StatusCode((int)HttpStatusCode.InternalServerError);
+                        }
+                    }
+                    else
+                    {
+                        return BadRequest(MessageExtension.ShowCustomMessage("Sing Up Error!", "User already exists", statusCode: HttpStatusCode.BadRequest));
+                    }
+                }
+
+                return BadRequest();
+            }
+            else
+            {
+                return BadRequest(ModelState);
+            }
+        }
+
+        [HttpPut("sign_up")]
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult> SignUpForm([FromForm] SignUpUserRequestDto user)
+        {
+            if (ModelState.IsValid)
+            {
+                Logger.Log($"HOST: {Request.Host.Value} | HOST = {Request.Host.Host} | PORT = {Request.Host.Port}");
+                if (user != null)
+                {
+                    if (await _userRepository.GetAsync(user.Username) == null)
+                    {
+                        User newUser = new User(user.Username, user.FirstName, user.LastName, SaltHasher.ComputeHash(user.Password));
+                        if (user.Image != null)
+                        {
+                            IFormFile imageFile = user.Image;
+                            ImageFile newImage = ImageHelper.CreateUserImageFile(newUser.Id);
                             if (imageFile != null &&
                                  await _imageFileRepository.InsertAsync(newImage))
                             {
-                                ImageHelper.SaveThumbImage(imageFile, newImage.ThumbUrl);
-                                await ImageHelper.SaveImageAsync(imageFile, newImage.Url);
-                                if (await _imageFileRepository.InsertAsync(newImage))
+                                if (await ImageHelper.SaveUserImageAsync(imageFile, newImage.Url, newImage.ThumbUrl))
                                 {
                                     newUser.ImageFileId = newImage.Id;
                                     newUser.ImageFile = newImage;
@@ -114,7 +145,7 @@ namespace TestAPI.Controllers
 
                         if (await _userRepository.InsertAsync(newUser))
                         {
-                            return Ok(new UserDto(newUser));
+                            return Ok(new UserDto(newUser,RootPath));
                         }
                         else
                         {
@@ -134,6 +165,5 @@ namespace TestAPI.Controllers
                 return BadRequest(ModelState);
             }
         }
-
     }
 }

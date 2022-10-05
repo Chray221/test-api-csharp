@@ -18,6 +18,7 @@ namespace TestAPI.Data
 
         public BaseModel()
         {
+            Id = Guid.NewGuid();
             CreatedAt = DateTime.Now;
             UpdatedAt = DateTime.Now;
         }

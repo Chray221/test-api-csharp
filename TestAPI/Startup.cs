@@ -13,6 +13,7 @@ using System.Linq;
 using System;
 using TestAPI.Services.Contracts;
 using TestAPI.Services.Concretes;
+using TestAPI.Helpers;
 
 namespace TestAPI
 {
@@ -45,15 +46,41 @@ namespace TestAPI
                 })
             //NOTE: change Newtonsoft Naming Policy to Snake Casing
                 .AddNewtonsoftJson(options =>
-                   options.SerializerSettings.ContractResolver =
-                        new DefaultContractResolver() { NamingStrategy = new SnakeCaseNamingStrategy() })
+                {
+                    options.SerializerSettings.ContractResolver =
+                         new DefaultContractResolver() { NamingStrategy = new SnakeCaseNamingStrategy() };
+                })
             //NOTE: change System.Text.Json Naming Policy to Snake Casing
-            //    .AddJsonOptions(options =>
-            //       options.JsonSerializerOptions.PropertyNamingPolicy =
-            //            new SnakeCasePropertyNamingPolicy())
+                .AddJsonOptions(options =>
+                   options.JsonSerializerOptions.PropertyNamingPolicy =
+                        new SnakeCasePropertyNamingPolicy())
                 .SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
 
-            services.AddControllers();
+            //NOTE: for controller
+            services.AddControllers()
+                //NOTE: change Newtonsoft Naming Policy to Snake Casing
+                .AddNewtonsoftJson(options =>
+                {
+                    options.SerializerSettings.ContractResolver =
+                         new DefaultContractResolver() { NamingStrategy = new SnakeCaseNamingStrategy() };
+                })
+            //NOTE: change System.Text.Json Naming Policy to Snake Casing
+                .AddJsonOptions(options =>
+                   options.JsonSerializerOptions.PropertyNamingPolicy =
+                        new SnakeCasePropertyNamingPolicy())
+            //NOTE: for xml formats
+                //.AddXmlSerializerFormatters(xmlOptions =>
+                //{
+
+                //})
+                //.AddXmlDataContractSerializerFormatters(xmlOptions =>
+                //{
+
+                //})
+                //.AddXmlOptions(xmlOptions =>
+                //{
+                //})
+                .SetCompatibilityVersion(CompatibilityVersion.Version_3_0); ;
 
             
 
@@ -74,7 +101,6 @@ namespace TestAPI
                 })
             //NOTE: added Newtonsoft for Swagger
                 .AddSwaggerGenNewtonsoftSupport()
-
                 .AddLogging();
 
             //NOTE: using sql or sqlite database when sql addition is in the CONTEXT
@@ -167,6 +193,7 @@ namespace TestAPI
                     c.SwaggerEndpoint("/swagger/v1.0/swagger.json", "Test Api");
                 });
 
+            // how to map api route 
             app.UseMvc(routes =>
             {
                 //default

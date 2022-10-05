@@ -16,12 +16,20 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using TestAPI.Controllers;
+using TestAPI.Data;
 
 namespace TestAPI.Helpers
 {
     public static class ImageHelper
     {
-        public static string ImagePath = Path.Combine($"Uploads", "Images");
+        public static string ImagePath = "Image";
+        private static string UserImageForlderPath = Path.Combine($"Upload", "User");
+        private static string ImageFolderPath = Path.Combine($"Upload", ImagePath);
+
+        public static bool IsImageExist(string imagePath)
+        {
+            return File.Exists(imagePath);
+        }
 
         public static async Task<bool> SaveImageAsync(IFormFile postedFile,string filePath)
         {
@@ -58,7 +66,6 @@ namespace TestAPI.Helpers
 
         public static void SaveThumbImage(IFormFile postedFile, string thumbFilePath)
         {
-            //return SaveResizeImage(postedFile, thumbFilePath, 200);
             SaveResizedImage(postedFile, thumbFilePath, 200);
         }
 
@@ -82,26 +89,59 @@ namespace TestAPI.Helpers
             }
         }
 
-        public static Task<bool> SaveUserImageAsync(IFormFile postedFile, string imagePathName)
-        {
-            string imagePath = Path.Combine( ImagePath, imagePathName);
-            return SaveImageAsync(postedFile, imagePath);
-        }
-
-        public static byte[] GetUserImageAsync(string imagePathName)
-        {
-            string imagePath = Path.Combine(ImagePath, imagePathName);
-            return RetrieveImage(imagePath);
-        }
-
-        public static string GetUserImageString(this MyControllerBase controller,string imagePathName)
+        public static string GetImageString(this MyControllerBase controller, string imagePathName)
         {
             return Path.Combine(controller.RootPath, ImagePath, imagePathName);
         }
 
-        public static bool IsImageExist(string imagePath)
+        #region User Image
+        public static async Task<bool> SaveUserImageAsync(IFormFile postedFile, string imagePathName, string thumbImagePathName)
         {
-            return File.Exists(imagePath);
+            string imagePath = Path.Combine(UserImageForlderPath, imagePathName);
+            string thumbImagePath = Path.Combine(UserImageForlderPath, thumbImagePathName);
+            if (await SaveImageAsync(postedFile, imagePath))
+            {
+                SaveThumbImage(postedFile, thumbImagePath);
+                return true;
+            }
+            
+            return false;
+        }
+
+        public static byte[] GetUserImageAsync(string imagePathName)
+        {
+            string imagePath = Path.Combine(UserImageForlderPath, imagePathName);
+            return RetrieveImage(imagePath);
+        }
+
+        public static string GetUserImageString(this MyControllerBase controller, string imagePathName)
+        {
+            return Path.Combine(controller.RootPath, GetSaveImageString(imagePathName));
+        }
+
+        private static string GetSaveImageString(string imagePathName)
+        {
+            if (imagePathName.Contains($"{ImagePath}{Path.DirectorySeparatorChar}"))
+            {
+                return Path.Combine(UserImageForlderPath, imagePathName);
+            }
+            return Path.Combine(UserImageForlderPath, ImagePath, imagePathName);
+        }
+        #endregion
+
+        public static ImageFile CreateUserImageFile(Guid userId)
+        {
+            if (userId != Guid.Empty)
+            {
+                ImageFile newImageFile = new ImageFile();
+                string userImageFolderPath = GetSaveImageString($"{userId}");
+                string imagePath = Path.Combine(ImagePath, $"{userId}", $"{newImageFile.Id}");
+                CreateFolder(userImageFolderPath);
+                newImageFile.Url = $"{imagePath}.jpg";
+                newImageFile.ThumbUrl = $"{imagePath}_thumb.jpg";
+                return newImageFile;
+            }
+            return null;
         }
     }
 }
