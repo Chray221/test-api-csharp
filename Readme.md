@@ -185,7 +185,7 @@ TestAPI is a C# .Net MVC API using Visual Studio as the IDE.
                 ``` sh
                 docker run -d -p 80:80 --name docker-tutorial docker1 01tutorial
                 ```
-##### [Using Posgresql in C#](https://medium.com/@agavatar/webapi-with-net-core-and-postgres-in-visual-studio-code-8b3587d12823) or [this](https://medium.com/@RobertKhou/asp-net-core-mvc-identity-using-postgresql-database-bc52255f67c4) #####
+##### [Using Posgresql in C#](https://medium.com/@agavatar/webapi-with-net-core-and-postgres-in-visual-studio-code-8b3587d12823) or [this](https://medium.com/@RobertKhou/asp-net-core-mvc-identity-using-postgresql-database-bc52255f67c4) 
 - install PostgreSQL
     ``` sh
     brew install postgresql
@@ -221,7 +221,7 @@ TestAPI is a C# .Net MVC API using Visual Studio as the IDE.
         psql -d [database_name]] -U [role_name]]
         ```
 - Adding in c# WEB API
-    - add Packages if .net version 3.1.2
+    - add Packages if .net version 3.1.2 or Up
         - [Npgsql.EntityFrameworkCore.PostgreSQL](https://www.nuget.org/packages/Npgsql.EntityFrameworkCore.PostgreSQL/3.1.2)
         - [Npgsql.EntityFrameworkCore.PostgreSQL.Design v1.1.0](https://www.nuget.org/packages/Npgsql.EntityFrameworkCore.PostgreSQL.Design/1.1.0)
     - add to `appsettings.json` or `appsettings.development.json`
@@ -239,7 +239,14 @@ TestAPI is a C# .Net MVC API using Visual Studio as the IDE.
         services.AddDbContext<TestContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("MyPostgresqlConn")));
         ```
-
+#### EntityFramework Model attributes
+    - [Required] for Dto request required checking
+    - [Key] for primary key
+    - [ForeignKey] for foreign key can be add to object property as reference for fetch via primary key
+        - _dbContext.Entry(dataObject).Reference(u => u.RefObject).Load(); to use relationship data.
+        - or _dbContext.Table.Include(u => u.RefObject);
+    - [Index(nameof(propName),IsUnique =true)] //add in class
+    - [Column] use for defining column options
 
 #### How To Migrate
 ##### Using EntityFramework 6.4.4
@@ -255,8 +262,121 @@ TestAPI is a C# .Net MVC API using Visual Studio as the IDE.
     }    
     ```
 
+##### Attribute for Controller
+    - [Authorize] to add authorization in controller or controller method or actions
+    - [AllowAnonymous] add in action to even if controller is [Authorize] it can still be access with out authorization
+    - 
+
+#### How to add Authentication
+##### JWT Token Bearer
+- First install nugger
+    - Microsoft.AspNetCore.Identity
+    - Microsoft.AspNetCore.Authentication.JwtBearer
+- Then add in appsettings.json
+    ``` json
+        ,  
+          "JWT": {  
+            "ValidAudience": "http://localhost:4200",  
+            "ValidIssuer": "http://localhost:61955",  
+            "Secret": "ByYM000OLlMQG6VVVp1OH7Xzyr7gHuw1qvUC5dcGt3SNM"  
+          }  
+    ```
+- Then add UserRoles *optional
+    ``` csharp
+        public static class UserRoles  
+        {  
+            public const string Admin = "Admin";  
+            public const string User = "User";  
+        }  
+    ```
+- Then add in StartUp's ConfigureServices
+``` csharp
+// Adding Authentication  
+            services.AddAuthentication(options =>  
+            {  
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;  
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;  
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;  
+            })  
+  
+            // Adding Jwt Bearer  
+            .AddJwtBearer(options =>  
+            {  
+                options.SaveToken = true;  
+                options.RequireHttpsMetadata = false;  
+                options.TokenValidationParameters = new TokenValidationParameters()  
+                {  
+                    ValidateIssuer = true,  
+                    ValidateAudience = true,  
+                    ValidAudience = Configuration["JWT:ValidAudience"],  
+                    ValidIssuer = Configuration["JWT:ValidIssuer"],  
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JWT:Secret"]))  
+                };  
+            });  
+```
+- Then use to create token
+``` csharp
+    public string CreateToker(string username)
+    {
+
+        var authClaims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, username),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(ClaimTypes.Role, "User"),
+            };
+        //if user has many roles
+        //foreach (var userRole in userRoles)
+        //{
+        //    authClaims.Add(new Claim(ClaimTypes.Role, userRole));
+        //}
+
+        SymmetricSecurityKey authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
+
+        JwtSecurityToken token = new JwtSecurityToken(
+            issuer: _configuration["JWT:ValidIssuer"],
+            audience: _configuration["JWT:ValidAudience"],
+            expires: DateTime.Now.AddHours(3),
+            claims: authClaims,
+            signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
+            );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+```
+
+
 #### How to add Swagger
 - First
-    insall nuget Swashbuckle.AspNetCore and Swashbuckle.AspNetCore.Annotations
-- 
+    insall nuget
+        - Swashbuckle.AspNetCore
+        - Swashbuckle.AspNetCore.Annotations
+        - Swashbuckle.AspNetCore.Newtonsoft
+- Then add to `StartUp's Configure()'
+    ``` csharp
+    app.UseSwagger()
+        .UseSwaggerUI(c =>
+        {
+            c.SwaggerEndpoint("/swagger/v1.0/swagger.json", "Test Api");
+        });
+    ```
+- Then add to `StartUp's ConfigureServices()'
+    ``` csharp
+        //NOTE: To use swagger
+        services
+            .AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1.0", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "TestC# API", Version = "v1.0" });
+                c.ResolveConflictingActions(apidescription => apidescription.First());
+            })
+        //NOTE: added Newtonsoft for Swagger
+            .AddSwaggerGenNewtonsoftSupport()
+            .AddLogging();        
+    ```
 
+#### Random
+- To get exception in Controller Action
+    ``` csharp        
+        var exceptionHandlerFeature =
+            HttpContext.Features.Get<IExceptionHandlerFeature>()!;
+    ```

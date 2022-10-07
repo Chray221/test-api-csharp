@@ -3,17 +3,20 @@
 //using Microsoft.Extensions.Logging.Console;
 //using System.Data.Entity;
 using System;
+using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Debug;
 using TestAPI.Data;
+using TestAPI.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace TestAPI.ModelContexts
 {
-    public class TestDbContext : DbContext
+    public class TestDbContext : IdentityDbContext<ApplicationUser>
     {
-        public DbSet<User> Users { get; set; }
-        public DbSet<ImageFile> Images { get; set; }
+        public DbSet<User> User { get; set; }
+        public DbSet<ImageFile> Image { get; set; }
         //NOTE: when extending DbContext using Microsoft.EntityFrameworkCore;
         public TestDbContext(DbContextOptions<TestDbContext> options) : base(options)
         {
@@ -25,10 +28,10 @@ namespace TestAPI.ModelContexts
 
             //NOTE: Update Databse or Migrate new Scheme when extending DbContext using Microsoft.EntityFrameworkCore;
             //Logger.Log($"MIGRATIONS_START APPLIED={Database.GetAppliedMigrations().Count()} | PENDING={Database.GetPendingMigrations().Count()}");
-            //if (Database.GetPendingMigrations().Any())
-            //{
-            //    Database.Migrate();
-            //}
+            if (Database.GetPendingMigrations().Any())
+            {
+                Database.Migrate();
+            }
             //Logger.Log($"MIGRATIONS_END APPLIED={Database.GetAppliedMigrations().Count()} | PENDING={Database.GetPendingMigrations().Count()}");
         }
 

@@ -14,6 +14,12 @@ using System;
 using TestAPI.Services.Contracts;
 using TestAPI.Services.Concretes;
 using TestAPI.Helpers;
+using System.Threading.Tasks;
+using TestAPI.Filters;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using TestAPI.Data;
 
 namespace TestAPI
 {
@@ -38,53 +44,34 @@ namespace TestAPI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            #region For MVC
             //NOTE: for mvc
-            services
-                .AddMvc(options =>
+            services.AddMvc(options =>
                 {
+                    options.Filters.Add<HttpResponseExceptionFilter>();
+                    options.Filters.Add<AutoAuthenticationFilter>();
                     options.EnableEndpointRouting = false;
                 })
-            //NOTE: change Newtonsoft Naming Policy to Snake Casing
-                .AddNewtonsoftJson(options =>
-                {
-                    options.SerializerSettings.ContractResolver =
-                         new DefaultContractResolver() { NamingStrategy = new SnakeCaseNamingStrategy() };
-                })
-            //NOTE: change System.Text.Json Naming Policy to Snake Casing
-                .AddJsonOptions(options =>
-                   options.JsonSerializerOptions.PropertyNamingPolicy =
-                        new SnakeCasePropertyNamingPolicy())
-                .SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
-
-            //NOTE: for controller
-            services.AddControllers()
                 //NOTE: change Newtonsoft Naming Policy to Snake Casing
                 .AddNewtonsoftJson(options =>
                 {
                     options.SerializerSettings.ContractResolver =
                          new DefaultContractResolver() { NamingStrategy = new SnakeCaseNamingStrategy() };
+                    // ignore reference loop
+                    options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
                 })
-            //NOTE: change System.Text.Json Naming Policy to Snake Casing
+                //NOTE: change System.Text.Json Naming Policy to Snake Casing
                 .AddJsonOptions(options =>
                    options.JsonSerializerOptions.PropertyNamingPolicy =
                         new SnakeCasePropertyNamingPolicy())
-            //NOTE: for xml formats
-                //.AddXmlSerializerFormatters(xmlOptions =>
-                //{
+                .SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
+            #endregion
 
-                //})
-                //.AddXmlDataContractSerializerFormatters(xmlOptions =>
-                //{
+            #region For Controller
+            //NOTE: for controller
+            services.AddControllers();
 
-                //})
-                //.AddXmlOptions(xmlOptions =>
-                //{
-                //})
-                .SetCompatibilityVersion(CompatibilityVersion.Version_3_0); ;
-
-            
-
-
+            #endregion
             // NOTE: add default versioning
             services.AddApiVersioning(cfg =>
             {
@@ -106,7 +93,7 @@ namespace TestAPI
             //NOTE: using sql or sqlite database when sql addition is in the CONTEXT
             //services.AddDbContext<TestContext>();
 
-            
+            //NOTE: add dbcontext
             services.AddDbContext<TestDbContext>(options =>
             {
                 #region from string connection
@@ -157,14 +144,47 @@ namespace TestAPI
 
                 #endregion
             });
-
             //services
             //    .AddIdentity<User, IdentityRole<long>>()
             //    .AddDefaultTokenProviders();
 
+            //adding indentity to DbContext
+            services.AddIdentity<ApplicationUser, IdentityRole>()
+             //adding indentity to DbContext
+                .AddEntityFrameworkStores<TestDbContext>()
+                .AddSignInManager()
+                .AddDefaultTokenProviders();
+
+            #region Adding Authentication
+            // Adding Authentication  
+            services.AddAuthentication(options =>
+            {
+                options.DefaultSignInScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+                // Adding Jwt Bearer  
+                .AddJwtBearer(options =>
+                {
+                    options.SaveToken = true;
+                    options.RequireHttpsMetadata = false;
+                    options.TokenValidationParameters = new TokenValidationParameters()
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidAudience = Configuration["JWT:ValidAudience"],
+                        ValidIssuer = Configuration["JWT:ValidIssuer"],
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JWT:Secret"]))
+                    };
+                });
+            services.AddAuthorization();
+            #endregion
+
             // adding services
             services.AddTransient<IUserRepository, UserRepository>();
             services.AddTransient<IImageFileRepository, ImageFileRepository>();
+            services.AddTransient<IJwtSerivceManager, JwtSerivceManager>();
         }
 
         //NOTE: This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -173,17 +193,19 @@ namespace TestAPI
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                app.UseExceptionHandler("/error/development");
             }
             else
             {
                 app.UseExceptionHandler("Home/Error");
             }
-
+            
             app.UseSwagger()
                .UseStaticFiles()
                .UseHttpsRedirection()
                .UseRouting()
                .UseAuthorization()
+               .UseAuthentication()
                .UseEndpoints(endpoints =>
                 {
                     endpoints.MapControllers();
@@ -197,9 +219,13 @@ namespace TestAPI
             app.UseMvc(routes =>
             {
                 //default
-                routes.MapRoute("default", "{version:apiversion}/api/{controller=Home}/{action=Index}/{id?}");
+                routes.MapRoute(
+                    name:"default",
+                    template:"v{version:apiversion}/api/{controller}/{action}");
             });
-            
+
+            //NOTE: if using filters
+            app.UseHostFiltering();
         }
 
         //public static void ConfigureWebApi(IApplicationBuilder applicationBuilder)

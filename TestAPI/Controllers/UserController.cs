@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using TestAPI.Data;
@@ -14,6 +15,7 @@ namespace TestAPI.Controllers
     [ApiController]
     [ApiVersion("1.0")]
     [Route("v{version:apiversion}/api/[controller]")]
+    [Authorize]
     public class UserController : MyControllerBase
     {
         #region fields

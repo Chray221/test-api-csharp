@@ -27,16 +27,22 @@ namespace TestAPI.Services.Concretes
 
         public async Task<User> GetAsync(string username, string password)
         {
-            User userFound = await _dbContext.Users.FirstOrDefaultAsync(user => user.Username == username && user.Password == password);
+            User userFound = await _dbContext.User.FirstOrDefaultAsync(user => user.Username == username && user.Password == password);
             GetUserImage(userFound);
             return userFound;
         }
 
         public async Task<User> GetAsync(string username)
         {
-            User userFound = await _dbContext.Users.FirstOrDefaultAsync(user => user.Username == username);
+            User userFound = await _dbContext.User.FirstOrDefaultAsync(user => user.Username == username);
             GetUserImage(userFound);
             return userFound;
+        }
+
+        public async Task<bool> IsUserNameExistAsync(string username)
+        {
+            User userFound = await _dbContext.User.FirstOrDefaultAsync(user => user.Username == username);
+            return userFound != null;
         }
 
         private void GetUserImage(User userFound)

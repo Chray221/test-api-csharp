@@ -10,6 +10,7 @@ namespace TestAPI.Controllers
     {
 
         public string RootPath { get { return Host.HostEnvironment.WebRootPath ?? Host.HostEnvironment.ContentRootPath; } }
+        public string RootUrl = "";
 
         public MyControllerBase(IWebHostEnvironment environment)
         {
