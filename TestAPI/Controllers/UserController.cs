@@ -37,7 +37,7 @@ namespace TestAPI.Controllers
                 User user = await _userRepository.GetAsync(userId);
                 if(user != null)
                 {
-                    return Ok(new PublicProfile(user));
+                    return Ok(new PublicProfile(user,this.GetRootUrl()));
                 }
             }
             else if (!string.IsNullOrEmpty(idOrUsername))
@@ -45,7 +45,7 @@ namespace TestAPI.Controllers
                 User user = await _userRepository.GetAsync(idOrUsername);
                 if (user != null)
                 {
-                    return Ok(new PublicProfile(user));
+                    return Ok(new PublicProfile(user, this.GetRootUrl()));
                 }
             }
             

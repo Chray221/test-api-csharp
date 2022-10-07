@@ -54,28 +54,28 @@ namespace TestAPI.Controllers
                     if (user != null)
                     {
                         User userFound = await _userRepository.GetAsync(user.Username);
-
                         if(userFound == null)
                         {
-                            return BadRequest(MessageExtension.ShowCustomMessage("Sign In Error", "User is not registered", "Sign Up", statusCode: HttpStatusCode.BadRequest));
+                            return BadRequest(MessageExtension.ShowCustomMessage("Sign In Error", "User is not registered", statusCode: HttpStatusCode.BadRequest));
                         }
-                        if (jwtSerivceManager.IsEnabled)
+
+                        if (SaltHasher.VerifyHash(user.Password, userFound.Password))
                         {
-                            string token = await jwtSerivceManager.CreateToken(user);
-                            if (string.IsNullOrEmpty(token))
+                            UserDto userDto = new UserDto(userFound, this.GetRootUrl());
+                            if (jwtSerivceManager.IsEnabled)
                             {
-                                return StatusCode((int)HttpStatusCode.InternalServerError, MessageExtension.ShowCustomMessage("Sign In Error", "Something went wrong", "Okay", statusCode: HttpStatusCode.InternalServerError));
+                                //userDto.Token = await jwtSerivceManager.CreateToken(user);
+                                userDto.Token = jwtSerivceManager.CreateToken(userDto);
+                                if (string.IsNullOrEmpty(userDto.Token))
+                                {
+                                    return StatusCode((int)HttpStatusCode.InternalServerError, MessageExtension.ShowCustomMessage("SignIn Error", "Something went wrong", "Okay", statusCode: HttpStatusCode.InternalServerError));
+                                }
                             }
-
-                            if (SaltHasher.VerifyHash(user.Password, userFound.Password))
-                            {
-                                UserDto userDto = new UserDto(userFound, this.GetRootUrl());
-                                userDto.Token = token;
-                                return Ok(userDto);
-                            }
+                            return Ok(userDto);
                         }
+                        
 
-                        return BadRequest(MessageExtension.ShowCustomMessage("Sign In Error", "Username or password mismatched", "Okay", statusCode: HttpStatusCode.BadRequest));
+                        return BadRequest(MessageExtension.ShowCustomMessage("SignIn Error", "Username or password mismatched", "Okay", statusCode: HttpStatusCode.BadRequest));
                     }
                     return NotFound();
                 }
@@ -94,55 +94,24 @@ namespace TestAPI.Controllers
         [HttpPut("sign_up")]
         [Consumes("application/json")]
         [SwaggerResponse(statusCode: (int)HttpStatusCode.OK, Type = typeof(UserDto))]
-        public async Task<ActionResult> SignUp(
+        public Task<IActionResult> SignUp(
             [FromBody]SignUpUserRequestDto user,
             [FromServices] IJwtSerivceManager jwtSerivceManager)
         {
-            if (ModelState.IsValid)
-            {
-                if (user != null)
-                {
-                    if (await _userRepository.IsUserNameExistAsync(user.Username))
-                    {
-                        return BadRequest(MessageExtension.ShowCustomMessage("Sing Up Error!", "Username already taken.", statusCode: HttpStatusCode.BadRequest));
-                    }
-
-                    if (jwtSerivceManager.IsEnabled)
-                    {
-                        if (!await jwtSerivceManager.SaveIndentity(user))
-                        {
-                            return StatusCode((int)HttpStatusCode.InternalServerError, MessageExtension.ShowCustomMessage("Login Error", "Something went wrong!", statusCode: HttpStatusCode.InternalServerError));
-                        }
-                    }
-                    else
-                    {
-
-                    }
-                    User newUser = new User(user.Username, user.FirstName, user.LastName, SaltHasher.ComputeHash(user.Password), user.Email);
-                    if (await _userRepository.InsertAsync(newUser))
-                    {
-                        return Ok(new UserDto(newUser, this.GetRootUrl()));
-                    }
-                    else
-                    {
-                        return StatusCode((int)HttpStatusCode.InternalServerError);
-                    }
-                }
-
-                return BadRequest();
-            }
-            else
-            {
-                return BadRequest(ModelState);
-            }
+            return RegisterUser(user, jwtSerivceManager);
         }
 
         [HttpPut("sign_up")]
         [Consumes("multipart/form-data")]
         [SwaggerResponse(statusCode: (int)HttpStatusCode.OK, Type = typeof(UserDto))]
-        public async Task<ActionResult> SignUpForm(
+        public Task<IActionResult> SignUpForm(
             [FromForm] SignUpUserRequestDto user,
             [FromServices] IJwtSerivceManager jwtSerivceManager)
+        {
+            return RegisterUser(user, jwtSerivceManager);
+        }
+
+        private async Task<IActionResult> RegisterUser( SignUpUserRequestDto user, IJwtSerivceManager jwtSerivceManager)
         {
             if (ModelState.IsValid)
             {
@@ -150,19 +119,15 @@ namespace TestAPI.Controllers
                 {
                     if (await _userRepository.IsUserNameExistAsync(user.Username))
                     {
-                        return BadRequest(MessageExtension.ShowCustomMessage("Sing Up Error!", "Username already taken.", statusCode: HttpStatusCode.BadRequest));
+                        return BadRequest(MessageExtension.ShowCustomMessage("Sign Up Error!", "Username already taken.", statusCode: HttpStatusCode.BadRequest));
                     }
-                    if (jwtSerivceManager.IsEnabled)
-                    {
-                        if (!await jwtSerivceManager.SaveIndentity(user))
-                        {
-                            return StatusCode((int)HttpStatusCode.InternalServerError, MessageExtension.ShowCustomMessage("Login Error", "Something went wrong!", statusCode: HttpStatusCode.InternalServerError));
-                        }
-                    }
-                    else
-                    {
-
-                    }
+                    //if (jwtSerivceManager.IsEnabled)
+                    //{
+                    //    if (!await jwtSerivceManager.SaveIndentity(user))
+                    //    {
+                    //        return StatusCode((int)HttpStatusCode.InternalServerError, MessageExtension.ShowCustomMessage("Sign Up Error!", "Something went wrong!", statusCode: HttpStatusCode.InternalServerError));
+                    //    }
+                    //}
 
                     User newUser = new User(user.Username, user.FirstName, user.LastName, SaltHasher.ComputeHash(user.Password), user.Email);
                     if (user.Image != null)
@@ -182,7 +147,17 @@ namespace TestAPI.Controllers
 
                     if (await _userRepository.InsertAsync(newUser))
                     {
-                        return Ok(new UserDto(newUser, this.GetRootUrl()));
+                        UserDto userDto = new UserDto(newUser, this.GetRootUrl());
+                        if (jwtSerivceManager.IsEnabled)
+                        {
+                            //userDto.Token = await jwtSerivceManager.CreateToken(user);
+                            userDto.Token = jwtSerivceManager.CreateToken(userDto);
+                            if (string.IsNullOrEmpty(userDto.Token))
+                            {
+                                return StatusCode((int)HttpStatusCode.InternalServerError, MessageExtension.ShowCustomMessage("Sign In Error", "Something went wrong", "Okay", statusCode: HttpStatusCode.InternalServerError));
+                            }
+                        }
+                        return Ok(userDto);
                     }
                     else
                     {
@@ -197,5 +172,6 @@ namespace TestAPI.Controllers
                 return BadRequest(ModelState);
             }
         }
+
     }
 }

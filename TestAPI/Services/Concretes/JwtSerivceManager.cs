@@ -31,7 +31,30 @@ namespace TestAPI.Services.Concretes
         }
 
         public bool IsEnabled => _configuration.GetValue<bool>("JWT:IsEnabled");
+        public string CreateToken(UserDto user)
+        {
+            if(user != null)
+            {
+                var authClaims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.Name, user.Username),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                };
 
+                SymmetricSecurityKey authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
+
+                JwtSecurityToken token = new JwtSecurityToken(
+                    issuer: _configuration["JWT:ValidIssuer"],
+                    audience: _configuration["JWT:ValidAudience"],
+                    expires: DateTime.Now.AddHours(3),
+                    claims: authClaims,
+                    signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
+                    );
+
+                return new JwtSecurityTokenHandler().WriteToken(token);
+            }
+            return null;
+        }
         public async Task<string> CreateToken(SignInUserRequestDto signInUser)
         {
             ApplicationUser user = await _userManager.FindByNameAsync(signInUser.Username);

@@ -16,6 +16,19 @@ namespace TestAPI.Controllers
         {            
         }
 
+        //image
+        [HttpGet]
+        public ActionResult GetLogo()
+        {
+            string imageName = "Logo.png";
+            string filePath = this.GetImageString($"{imageName}");
+            if (!ImageHelper.IsImageExist(filePath))
+            {
+                return NotFound();
+            }
+            return PhysicalFile(filePath, $"image/{Path.GetExtension(imageName).Replace(".", "")}", true);
+        }
+
         // GET images/image.jpg
         [HttpGet("{imageName}")]
         public ActionResult GetImage(string imageName)
@@ -38,19 +51,6 @@ namespace TestAPI.Controllers
                 return NotFound();
             }
             return PhysicalFile(filePath, $"image/{Path.GetExtension(imageName).Replace(".", "")}", true);
-        }
-
-        //image
-        [HttpGet]
-        public ActionResult GetLogo()
-        {
-            string imageName = "Logo.png";
-            string filePath = this.GetImageString($"{imageName}");
-            if (!ImageHelper.IsImageExist(filePath))
-            {
-                return NotFound();
-            }
-            return PhysicalFile(filePath, $"image/${Path.GetExtension(imageName).Replace(".", "")}", true);
         }
 
         // GET images/image.jpg/download
