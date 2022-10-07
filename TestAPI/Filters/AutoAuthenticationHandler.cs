@@ -1,6 +1,4 @@
-﻿using System;
-using System.Net.Http;
-using System.Security.Principal;
+﻿using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Filters;

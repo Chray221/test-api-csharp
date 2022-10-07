@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using TestAPI.Helpers;
-using TestAPI.ModelContexts;
 
 namespace TestAPI.Controllers
 {

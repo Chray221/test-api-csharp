@@ -1,16 +1,7 @@
-﻿using System;
-using System.IO;
-//using System.IO;
-using System.Net.Http;
-using System.Net.Http.Headers;
+﻿using System.IO;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 using TestAPI.Helpers;
-using TestAPI.ModelContexts;
-using TestAPI.Models;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 

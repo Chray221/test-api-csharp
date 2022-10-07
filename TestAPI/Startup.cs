@@ -14,12 +14,10 @@ using System;
 using TestAPI.Services.Contracts;
 using TestAPI.Services.Concretes;
 using TestAPI.Helpers;
-using System.Threading.Tasks;
 using TestAPI.Filters;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using TestAPI.Data;
 
 namespace TestAPI
 {
@@ -88,6 +86,9 @@ namespace TestAPI
             //NOTE: added Newtonsoft for Swagger
                 .AddSwaggerGenNewtonsoftSupport()
                 .AddLogging();
+
+            //NOTE: to set controller name to lowecase
+            services.AddRouting(options => options.LowercaseUrls = true);
 
             ConfigureDbContext(services);
             if (Configuration.GetValue<bool>("JWT:IsEnabled"))

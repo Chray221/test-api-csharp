@@ -1,27 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
-using Newtonsoft.Json;
-using SixLabors.ImageSharp;
 using TestAPI.Helpers;
 using TestAPI.ModelContexts;
 using TestAPI.Data;
 using TestAPI.Models;
 using TestAPI.Services.Contracts;
-using TestAPI.Filters;
 using Swashbuckle.AspNetCore.Annotations;
-using Microsoft.AspNetCore.Identity;
 
 namespace TestAPI.Controllers
 {
