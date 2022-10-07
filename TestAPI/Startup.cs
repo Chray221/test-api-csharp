@@ -44,12 +44,12 @@ namespace TestAPI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            #region For MVC
+            #region For MVC Controller Settings
             //NOTE: for mvc
             services.AddMvc(options =>
                 {
                     options.Filters.Add<HttpResponseExceptionFilter>();
-                    options.Filters.Add<AutoAuthenticationFilter>();
+                    //options.Filters.Add<AutoAuthenticationFilter>();
                     options.EnableEndpointRouting = false;
                 })
                 //NOTE: change Newtonsoft Naming Policy to Snake Casing
@@ -62,16 +62,15 @@ namespace TestAPI
                 })
                 //NOTE: change System.Text.Json Naming Policy to Snake Casing
                 .AddJsonOptions(options =>
-                   options.JsonSerializerOptions.PropertyNamingPolicy =
-                        new SnakeCasePropertyNamingPolicy())
+                {
+                    options.JsonSerializerOptions.PropertyNamingPolicy =
+                         new SnakeCasePropertyNamingPolicy();
+                })
                 .SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
-            #endregion
-
-            #region For Controller
             //NOTE: for controller
             services.AddControllers();
-
             #endregion
+
             // NOTE: add default versioning
             services.AddApiVersioning(cfg =>
             {
@@ -90,6 +89,63 @@ namespace TestAPI
                 .AddSwaggerGenNewtonsoftSupport()
                 .AddLogging();
 
+            ConfigureDbContext(services);
+            if (Configuration.GetValue<bool>("JWT:IsEnabled"))
+            {
+                ConfigureJWTAuthentication(services);
+                //ConfigureJWTAuthenticationV2(services);
+            }
+            else
+            {
+                ConfigureDefaultAuthentication(services);
+            }
+            ConfigureRepositories(services);
+        }
+
+        //NOTE: This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        {
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+                app.UseExceptionHandler("/error/development");
+            }
+            else
+            {
+                app.UseExceptionHandler("Home/Error");
+                app.UseExceptionHandler("/error");
+            }
+            
+            app.UseSwagger()
+               .UseStaticFiles()
+               .UseHttpsRedirection()
+               .UseRouting()
+               .UseAuthentication()
+               .UseAuthorization()
+               .UseEndpoints(endpoints =>
+                {
+                    endpoints.MapControllers();
+                })
+               .UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/swagger/v1.0/swagger.json", "Test Api");
+                });
+
+            // how to map api route 
+            app.UseMvc(routes =>
+            {
+                //default
+                routes.MapRoute(
+                    name:"default",
+                    template:"v{version:apiversion}/api/{controller}/{action}");
+            });
+
+            //NOTE: if using filters
+            app.UseHostFiltering();
+        }
+
+        private void ConfigureDbContext(IServiceCollection services)
+        {
             //NOTE: using sql or sqlite database when sql addition is in the CONTEXT
             //services.AddDbContext<TestContext>();
 
@@ -144,22 +200,21 @@ namespace TestAPI
 
                 #endregion
             });
-            //services
-            //    .AddIdentity<User, IdentityRole<long>>()
-            //    .AddDefaultTokenProviders();
+        }
 
+        private void ConfigureJWTAuthentication(IServiceCollection services)
+        {
             //adding indentity to DbContext
             services.AddIdentity<ApplicationUser, IdentityRole>()
-             //adding indentity to DbContext
+                //adding indentity to DbContext
                 .AddEntityFrameworkStores<TestDbContext>()
-                .AddSignInManager()
+                //.AddSignInManager()
                 .AddDefaultTokenProviders();
 
             #region Adding Authentication
             // Adding Authentication  
             services.AddAuthentication(options =>
             {
-                options.DefaultSignInScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -180,54 +235,61 @@ namespace TestAPI
                 });
             services.AddAuthorization();
             #endregion
+        }
 
+        private void ConfigureJWTAuthenticationV2(IServiceCollection services)
+        {
+            //adding indentity to DbContext
+            services.AddIdentity<ApplicationUser, IdentityRole>()
+                //adding indentity to DbContext
+                .AddEntityFrameworkStores<TestDbContext>()
+                .AddSignInManager()
+                .AddDefaultTokenProviders();
+
+            #region Adding Authentication
+            // Adding Authentication  
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                // Adding Jwt Bearer  
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters()
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidAudience = Configuration["JWT:ValidAudience"],
+                        ValidIssuer = Configuration["JWT:ValidIssuer"],
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JWT:Secret"]))
+                    };
+                });
+            services.AddAuthorization();
+            #endregion
+        }
+
+        private static void ConfigureDefaultAuthentication(IServiceCollection services)
+        {
+            services.AddIdentityCore<ApplicationUser>()
+            .AddRoles<IdentityRole>()
+            .AddEntityFrameworkStores<TestDbContext>()
+            .AddSignInManager()
+            .AddDefaultTokenProviders();
+
+            services.AddAuthentication(o =>
+            {
+                o.DefaultScheme = IdentityConstants.ApplicationScheme;
+                o.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+            })
+            .AddIdentityCookies(o => { });
+        }
+
+        private static void ConfigureRepositories(IServiceCollection services)
+        {
             // adding services
             services.AddTransient<IUserRepository, UserRepository>();
             services.AddTransient<IImageFileRepository, ImageFileRepository>();
             services.AddTransient<IJwtSerivceManager, JwtSerivceManager>();
         }
-
-        //NOTE: This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
-        {
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-                app.UseExceptionHandler("/error/development");
-            }
-            else
-            {
-                app.UseExceptionHandler("Home/Error");
-            }
-            
-            app.UseSwagger()
-               .UseStaticFiles()
-               .UseHttpsRedirection()
-               .UseRouting()
-               .UseAuthorization()
-               .UseAuthentication()
-               .UseEndpoints(endpoints =>
-                {
-                    endpoints.MapControllers();
-                })
-               .UseSwaggerUI(c =>
-                {
-                    c.SwaggerEndpoint("/swagger/v1.0/swagger.json", "Test Api");
-                });
-
-            // how to map api route 
-            app.UseMvc(routes =>
-            {
-                //default
-                routes.MapRoute(
-                    name:"default",
-                    template:"v{version:apiversion}/api/{controller}/{action}");
-            });
-
-            //NOTE: if using filters
-            app.UseHostFiltering();
-        }
-
+        
         //public static void ConfigureWebApi(IApplicationBuilder applicationBuilder)
         //{
         //    applicationBuilder.UseCors();

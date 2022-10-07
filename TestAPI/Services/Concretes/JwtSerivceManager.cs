@@ -31,16 +31,18 @@ namespace TestAPI.Services.Concretes
             _signInManager = signInManager;
         }
 
-        public async Task<string> CreateToken(string username, string password)
+        public bool IsEnabled => _configuration.GetValue<bool>("JWT:IsEnabled");
+
+        public async Task<string> CreateToken(SignInUserRequestDto signInUser)
         {
-            ApplicationUser user = await _userManager.FindByNameAsync(username);
-            if (user != null && await _userManager.CheckPasswordAsync(user, password))
+            ApplicationUser user = await _userManager.FindByNameAsync(signInUser.Username);
+            if (user != null && await _userManager.CheckPasswordAsync(user, signInUser.Password))
             {
                 var userRoles = await _userManager.GetRolesAsync(user);
 
                 var authClaims = new List<Claim>
                 {
-                    new Claim(ClaimTypes.Name, username),
+                    new Claim(ClaimTypes.Name, user.UserName),
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
                 };
 
@@ -59,32 +61,32 @@ namespace TestAPI.Services.Concretes
                     claims: authClaims,
                     signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
                     );
-                
-                SignInResult result = await _signInManager.PasswordSignInAsync(user, password, false, false);                
-                if (!result.Succeeded)
-                {
-                    throw new Exception(result.ToString());
-                }
+
+                //SignInResult result = await _signInManager.PasswordSignInAsync(user, signInUser.Password, false, false);
+                //if (!result.Succeeded)
+                //{
+                //    throw new Exception(result.ToString());
+                //}
 
                 return new JwtSecurityTokenHandler().WriteToken(token);
             }
             return null;
         }
 
-        public async Task<bool> SaveIndentity(string email, string username, string password, bool isAdmin = false)
+        public async Task<bool> SaveIndentity(SignUpUserRequestDto signUpUser, bool isAdmin = false)
         {
-            ApplicationUser userExists = await _userManager.FindByNameAsync(username);
+            ApplicationUser userExists = await _userManager.FindByNameAsync(signUpUser.Username);
             if (userExists != null)
             {
                 return false;
             }
             ApplicationUser user = new ApplicationUser()
             {
-                Email = email,
+                Email = signUpUser.Email,
                 SecurityStamp = Guid.NewGuid().ToString(),
-                UserName = username,
+                UserName = signUpUser.Username,
             };
-            IdentityResult result = await _userManager.CreateAsync(user, password);
+            IdentityResult result = await _userManager.CreateAsync(user, signUpUser.Password);
             if(!result.Succeeded)
             {                
                 throw new Exception(result.ToString());
@@ -102,13 +104,49 @@ namespace TestAPI.Services.Concretes
                     await _userManager.AddToRoleAsync(user, UserRoles.Admin);
                 }
             }
-            else
-            {
-                if (!await _roleManager.RoleExistsAsync(UserRoles.User))
-                    await _roleManager.CreateAsync(new IdentityRole(UserRoles.User));
-                await _userManager.AddToRoleAsync(user, UserRoles.User);
-            }
+            //else
+            //{
+            //    if (!await _roleManager.RoleExistsAsync(UserRoles.User))
+            //        await _roleManager.CreateAsync(new IdentityRole(UserRoles.User));
+            //    await _userManager.AddToRoleAsync(user, UserRoles.User);
+            //}
             return result.Succeeded;
         }
+
+        #region V2
+        public async Task<ApplicationUser> Authenticate(SignInUserRequestDto signInUser)
+        {
+            if (signInUser != null)
+            {
+
+                ApplicationUser user = await _userManager.FindByNameAsync(signInUser.Username);
+                if (user != null && await _userManager.CheckPasswordAsync(user, signInUser.Password))
+                {
+                    return user;
+                }
+            }
+            return null;
+        }
+
+        public async Task<string> GenerateToken(ApplicationUser user)
+        {
+            SymmetricSecurityKey authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
+            SigningCredentials signingCredentials = new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256);
+                List<Claim> authClaims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.Name, user.UserName),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                    new Claim(ClaimTypes.Email, user.Email)
+                };
+            
+            JwtSecurityToken token = new JwtSecurityToken(
+                    issuer: _configuration["JWT:ValidIssuer"],
+                    audience: _configuration["JWT:ValidAudience"],
+                    expires: DateTime.Now.AddHours(3),
+                    claims: authClaims,
+                    signingCredentials: signingCredentials);
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+        #endregion
     }
 }

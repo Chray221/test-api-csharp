@@ -71,17 +71,20 @@ namespace TestAPI.Controllers
                         {
                             return BadRequest(MessageExtension.ShowCustomMessage("Sign In Error", "User is not registered", "Sign Up", statusCode: HttpStatusCode.BadRequest));
                         }
-                        string token = await jwtSerivceManager.CreateToken(user.Username, user.Password);
-                        if(string.IsNullOrEmpty(token))
+                        if (jwtSerivceManager.IsEnabled)
                         {
-                            return StatusCode((int)HttpStatusCode.InternalServerError, MessageExtension.ShowCustomMessage("Sign In Error", "Something went wrong", "Okay", statusCode: HttpStatusCode.InternalServerError));
-                        }
+                            string token = await jwtSerivceManager.CreateToken(user);
+                            if (string.IsNullOrEmpty(token))
+                            {
+                                return StatusCode((int)HttpStatusCode.InternalServerError, MessageExtension.ShowCustomMessage("Sign In Error", "Something went wrong", "Okay", statusCode: HttpStatusCode.InternalServerError));
+                            }
 
-                        if (SaltHasher.VerifyHash(user.Password, userFound.Password))
-                        {
-                            UserDto userDto = new UserDto(userFound, this.GetRootUrl());
-                            userDto.Token = token;
-                            return Ok(new { user = userDto, status = HttpStatusCode.OK });
+                            if (SaltHasher.VerifyHash(user.Password, userFound.Password))
+                            {
+                                UserDto userDto = new UserDto(userFound, this.GetRootUrl());
+                                userDto.Token = token;
+                                return Ok(userDto);
+                            }
                         }
 
                         return BadRequest(MessageExtension.ShowCustomMessage("Sign In Error", "Username or password mismatched", "Okay", statusCode: HttpStatusCode.BadRequest));
@@ -115,14 +118,21 @@ namespace TestAPI.Controllers
                     {
                         return BadRequest(MessageExtension.ShowCustomMessage("Sing Up Error!", "Username already taken.", statusCode: HttpStatusCode.BadRequest));
                     }
-                    if (!await jwtSerivceManager.SaveIndentity(user.Email, user.Username, user.Password))
+
+                    if (jwtSerivceManager.IsEnabled)
                     {
-                        return StatusCode((int)HttpStatusCode.InternalServerError, MessageExtension.ShowCustomMessage("Login Error","Something went wrong!", statusCode: HttpStatusCode.InternalServerError));
+                        if (!await jwtSerivceManager.SaveIndentity(user))
+                        {
+                            return StatusCode((int)HttpStatusCode.InternalServerError, MessageExtension.ShowCustomMessage("Login Error", "Something went wrong!", statusCode: HttpStatusCode.InternalServerError));
+                        }
+                    }
+                    else
+                    {
+
                     }
                     User newUser = new User(user.Username, user.FirstName, user.LastName, SaltHasher.ComputeHash(user.Password), user.Email);
                     if (await _userRepository.InsertAsync(newUser))
                     {
-                        
                         return Ok(new UserDto(newUser, this.GetRootUrl()));
                     }
                     else
@@ -154,9 +164,16 @@ namespace TestAPI.Controllers
                     {
                         return BadRequest(MessageExtension.ShowCustomMessage("Sing Up Error!", "Username already taken.", statusCode: HttpStatusCode.BadRequest));
                     }
-                    if (!await jwtSerivceManager.SaveIndentity(user.Email,user.Username, user.Password))
+                    if (jwtSerivceManager.IsEnabled)
                     {
-                        return StatusCode((int)HttpStatusCode.InternalServerError, MessageExtension.ShowCustomMessage("Login Error", "Something went wrong!", statusCode: HttpStatusCode.InternalServerError));
+                        if (!await jwtSerivceManager.SaveIndentity(user))
+                        {
+                            return StatusCode((int)HttpStatusCode.InternalServerError, MessageExtension.ShowCustomMessage("Login Error", "Something went wrong!", statusCode: HttpStatusCode.InternalServerError));
+                        }
+                    }
+                    else
+                    {
+
                     }
 
                     User newUser = new User(user.Username, user.FirstName, user.LastName, SaltHasher.ComputeHash(user.Password), user.Email);

@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Threading.Tasks;
+using TestAPI.Models;
 
 namespace TestAPI.Services.Contracts
 {
     public interface IJwtSerivceManager
     {
-        Task<string> CreateToken(string username,string password);
-        Task<bool> SaveIndentity(string email, string username, string password, bool isAdmin = false);
+        Task<string> CreateToken(SignInUserRequestDto user);
+        Task<bool> SaveIndentity(SignUpUserRequestDto signUpUser, bool isAdmin = false);
+        bool IsEnabled { get; }
     }
 }

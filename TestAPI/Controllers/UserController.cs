@@ -6,16 +6,17 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using TestAPI.Data;
+using TestAPI.Helpers;
 using TestAPI.ModelContexts;
 using TestAPI.Models;
 using TestAPI.Services.Contracts;
 
 namespace TestAPI.Controllers
 {
+    [Authorize]
     [ApiController]
     [ApiVersion("1.0")]
     [Route("v{version:apiversion}/api/[controller]")]
-    [Authorize]
     public class UserController : MyControllerBase
     {
         #region fields
@@ -48,7 +49,7 @@ namespace TestAPI.Controllers
                 }
             }
             
-            return NotFound();
+            return NotFound(MessageExtension.ShowCustomMessage("Not Found", "User not found"));
         }
     }
 
