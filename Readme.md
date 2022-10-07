@@ -268,7 +268,7 @@ TestAPI is a C# .Net MVC API using Visual Studio as the IDE.
     - 
 
 #### How to add Authentication
-##### JWT Token Bearer version 1
+##### JWT Token Bearer
 - First install nugger
     - Microsoft.AspNetCore.Identity
     - Microsoft.AspNetCore.Authentication.JwtBearer
@@ -324,13 +324,13 @@ TestAPI is a C# .Net MVC API using Visual Studio as the IDE.
 ``` csharp
     public string CreateToker(string username)
     {
-
         var authClaims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, username),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(ClaimTypes.Role, "User"),
             };
+
         //if user has many roles
         //foreach (var userRole in userRoles)
         //{
