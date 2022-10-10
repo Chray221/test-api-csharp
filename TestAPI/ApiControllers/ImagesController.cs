@@ -1,20 +1,11 @@
-﻿using System;
-using System.IO;
-//using System.IO;
-using System.Net.Http;
-using System.Net.Http.Headers;
+﻿using System.IO;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 using TestAPI.Helpers;
-using TestAPI.ModelContexts;
-using TestAPI.Models;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
-namespace TestAPI.Controllers
+namespace TestAPI.ApiControllers
 {
     [ApiController]
     [Route("[controller]")]
@@ -23,6 +14,19 @@ namespace TestAPI.Controllers
 
         public ImageController(IWebHostEnvironment environment):base(environment)
         {            
+        }
+
+        //image
+        [HttpGet]
+        public ActionResult GetLogo()
+        {
+            string imageName = "Logo.png";
+            string filePath = this.GetImageString($"{imageName}");
+            if (!ImageHelper.IsImageExist(filePath))
+            {
+                return NotFound();
+            }
+            return PhysicalFile(filePath, $"image/{Path.GetExtension(imageName).Replace(".", "")}", true);
         }
 
         // GET images/image.jpg
@@ -47,19 +51,6 @@ namespace TestAPI.Controllers
                 return NotFound();
             }
             return PhysicalFile(filePath, $"image/{Path.GetExtension(imageName).Replace(".", "")}", true);
-        }
-
-        //image
-        [HttpGet]
-        public ActionResult GetLogo()
-        {
-            string imageName = "Logo.png";
-            string filePath = this.GetImageString($"{imageName}");
-            if (!ImageHelper.IsImageExist(filePath))
-            {
-                return NotFound();
-            }
-            return PhysicalFile(filePath, $"image/${Path.GetExtension(imageName).Replace(".", "")}", true);
         }
 
         // GET images/image.jpg/download

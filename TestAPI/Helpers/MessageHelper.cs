@@ -1,5 +1,4 @@
-﻿using System;
-using System.Net;
+﻿using System.Net;
 
 namespace TestAPI.Helpers
 {
@@ -35,13 +34,12 @@ namespace TestAPI.Helpers
         public static object ShowCustomMessage(string title, string content, string button = "Okay", string icon = null, int icon_type = 0, HttpStatusCode statusCode = HttpStatusCode.OK)
         {
             //status = 200 default
-            return new { custom_message = new { title, icon, icon_type, content, button },status = statusCode };
+            return new { custom_message = new { title, icon, icon_type, content, button }/*,status = statusCode */};
         }
 
         public static object ShowRequiredMessage(string propertyName)
         {
-            // status = 422
-            return new { error = $"{propertyName} is required!." ,status = HttpStatusCode.UnprocessableEntity };
+            return new { error = $"{propertyName} is required!." /*,status = HttpStatusCode.UnprocessableEntity*/ };
         }
     }
 }

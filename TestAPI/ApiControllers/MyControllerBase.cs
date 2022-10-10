@@ -2,14 +2,14 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using TestAPI.Helpers;
-using TestAPI.ModelContexts;
 
-namespace TestAPI.Controllers
+namespace TestAPI.ApiControllers
 {
     public class MyControllerBase : ControllerBase
     {
 
         public string RootPath { get { return Host.HostEnvironment.WebRootPath ?? Host.HostEnvironment.ContentRootPath; } }
+        public string RootUrl = "";
 
         public MyControllerBase(IWebHostEnvironment environment)
         {

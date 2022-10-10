@@ -8,5 +8,6 @@ namespace TestAPI.Services.Contracts
     {
         Task<User> GetAsync(string username, string password);
         Task<User> GetAsync(string username);
+        Task<bool> IsUserNameExistAsync(string username);
     }
 }

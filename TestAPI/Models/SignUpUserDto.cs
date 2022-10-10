@@ -18,6 +18,7 @@ namespace TestAPI.Models
         [FromFormSnakeCase]
         public string LastName { get; set; }
         public IFormFile Image { get; set; }
+        public string Email { get; set; }
 
         public SignUpUserRequestDto()
         {

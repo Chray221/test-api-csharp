@@ -11,7 +11,7 @@ namespace TestAPI.Models
         public string Image { get; set; }
 
         public PublicProfile() { }
-        public PublicProfile(User user, string rootUrl = "")
+        public PublicProfile(User user, string rootUrl)
         {
             Id = user.Id;
             FirstName = user.FirstName;

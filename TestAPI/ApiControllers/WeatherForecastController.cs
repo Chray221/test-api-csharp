@@ -13,7 +13,7 @@ using Newtonsoft.Json.Linq;
 using TestAPI.Helpers;
 using TestAPI.Models;
 
-namespace TestAPI.Controllers
+namespace TestAPI.ApiControllers
 {
     [ApiController]
     [Route("[controller]")]
