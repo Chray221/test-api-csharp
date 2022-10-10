@@ -16,6 +16,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using TestAPI.Controllers;
+using TestAPI.ApiControllers;
 using TestAPI.Data;
 
 namespace TestAPI.Helpers

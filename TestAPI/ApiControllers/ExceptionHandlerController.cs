@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using TestAPI.Filters;
 
-namespace TestAPI.Controllers
+namespace TestAPI.ApiControllers
 {
     //[ApiController]
     [ApiVersion("1.0")]

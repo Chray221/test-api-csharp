@@ -11,7 +11,7 @@ using TestAPI.Models;
 using TestAPI.Services.Contracts;
 using Swashbuckle.AspNetCore.Annotations;
 
-namespace TestAPI.Controllers
+namespace TestAPI.ApiControllers
 {
     [ApiController]
     [ApiVersion("1.0")]

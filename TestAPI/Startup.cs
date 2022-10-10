@@ -67,6 +67,7 @@ namespace TestAPI
                 .SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
             //NOTE: for controller
             services.AddControllers();
+            services.AddControllersWithViews();
             #endregion
 
             // NOTE: add default versioning
@@ -110,11 +111,12 @@ namespace TestAPI
             {
                 app.UseDeveloperExceptionPage();
                 app.UseExceptionHandler("/error/development");
+                app.UseHsts();
             }
             else
             {
                 app.UseExceptionHandler("Home/Error");
-                app.UseExceptionHandler("/error");
+                //app.UseExceptionHandler("/error");
             }
             
             app.UseSwagger()
@@ -126,6 +128,9 @@ namespace TestAPI
                .UseEndpoints(endpoints =>
                 {
                     endpoints.MapControllers();
+                    endpoints.MapControllerRoute(
+                        name: "default",
+                        pattern: "{controller=Home}/{action=Index}/{id?}");
                 })
                .UseSwaggerUI(c =>
                 {
@@ -138,7 +143,7 @@ namespace TestAPI
                 //default
                 routes.MapRoute(
                     name:"default",
-                    template:"v{version:apiversion}/api/{controller}/{action}");
+                    template: "v{version:apiversion}/api/{controller}/{action}");
             });
 
             //NOTE: if using filters
@@ -290,12 +295,6 @@ namespace TestAPI
             services.AddTransient<IImageFileRepository, ImageFileRepository>();
             services.AddTransient<IJwtSerivceManager, JwtSerivceManager>();
         }
-        
-        //public static void ConfigureWebApi(IApplicationBuilder applicationBuilder)
-        //{
-        //    applicationBuilder.UseCors();
-        //    applicationBuilder.UseWebSockets();
-        //}
 
     }
 }

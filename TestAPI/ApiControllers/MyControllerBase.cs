@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using TestAPI.Helpers;
 
-namespace TestAPI.Controllers
+namespace TestAPI.ApiControllers
 {
     public class MyControllerBase : ControllerBase
     {

@@ -11,7 +11,7 @@ using TestAPI.ModelContexts;
 using TestAPI.Models;
 using TestAPI.Services.Contracts;
 
-namespace TestAPI.Controllers
+namespace TestAPI.ApiControllers
 {
     [Authorize]
     [ApiController]
